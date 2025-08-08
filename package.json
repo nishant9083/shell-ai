@@ -1,0 +1,70 @@
+{
+  "name": "ai-cli",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A complete recreation of Google's Gemini-CLI using Ollama for local AI processing",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "build:core": "npm run build --workspace @ai-cli/core",
+    "build:cli": "npm run build --workspace @ai-cli/cli", 
+    "dev": "npm run dev --workspace @ai-cli/cli",
+    "start": "npm run start --workspace @ai-cli/cli",
+    "clean": "npm run clean --workspaces && rimraf dist node_modules/.cache",
+    "lint": "eslint packages --ext .ts,.tsx --fix",
+    "lint:check": "eslint packages --ext .ts,.tsx",
+    "type-check": "npm run type-check --workspaces",
+    "test": "npm run test --workspaces",
+    "prepare": "husky install",
+    "version": "node scripts/version.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-prettier": "^5.1.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "ai",
+    "cli",
+    "ollama",
+    "typescript",
+    "local-ai",
+    "terminal",
+    "assistant"
+  ],
+  "author": "AI-CLI Team",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/ai-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/ai-cli/issues"
+  },
+  "homepage": "https://github.com/your-username/ai-cli#readme",
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}
