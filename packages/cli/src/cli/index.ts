@@ -17,6 +17,10 @@ export async function main(): Promise<void> {
 
   // Initialize core components
   const configManager = new ConfigManager();
+  
+  // Initialize config with dynamic model detection
+  await configManager.initialize();  
+  
   const config = configManager.getConfig();
   const client = new OllamaClient(config);
   const memory = new MemoryManager(
@@ -53,7 +57,7 @@ export async function main(): Promise<void> {
         plugins,
         configManager,
         model: options.model,
-        systemPrompt: options.system,
+        systemPrompt: options.system || config.systemPrompt,
         temperature: options.temperature,
         maxTokens: options.maxTokens
       });
@@ -225,8 +229,8 @@ export async function main(): Promise<void> {
     .description('Search memories')
     .option('-l, --limit <limit>', 'Maximum results', parseInt, 10)
     .option('-t, --type <type>', 'Filter by type')
-    .action((query, options) => {
-      const results = memory.searchMemories(query, {
+    .action(async (query, options) => {
+      const results = await memory.searchMemories(query, {
         limit: options.limit,
         type: options.type
       });

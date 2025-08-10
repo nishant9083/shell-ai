@@ -25,6 +25,7 @@ This is a TypeScript monorepo project that recreates Google's Gemini-CLI functio
 4. Commands should implement the `SlashCommand` interface
 5. Use the memory system for context persistence
 6. Handle errors gracefully with user-friendly messages
+7. Always handle paths as absolute paths to avoid issues
 
 ## Code Style
 

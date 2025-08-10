@@ -159,3 +159,12 @@ export function isEmpty(value: unknown): boolean {
   if (isObject(value)) return Object.keys(value).length === 0;
   return false;
 }
+
+import { existsSync } from 'fs';
+import { join } from 'path';
+
+export function isGitRepository(directory: string): boolean {
+  // Check if the directory contains a .git folder
+  const gitDir = join(directory, '.git');
+  return existsSync(gitDir);
+}

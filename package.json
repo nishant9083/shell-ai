@@ -10,7 +10,7 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "build:core": "npm run build --workspace @ai-cli/core",
-    "build:cli": "npm run build --workspace @ai-cli/cli", 
+    "build:cli": "npm run build --workspace @ai-cli/cli",
     "dev": "npm run dev --workspace @ai-cli/cli",
     "start": "npm run start --workspace @ai-cli/cli",
     "clean": "npm run clean --workspaces && rimraf dist node_modules/.cache",
@@ -66,5 +66,9 @@
     "*.{json,md,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "@types/uuid": "^10.0.0",
+    "uuid": "^11.1.0"
   }
 }

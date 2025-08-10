@@ -44,12 +44,16 @@ export class MemoryManager {
     }
   }
 
-  addMemory(item: Omit<MemoryItem, 'id' | 'timestamp'>): string {
+  async addMemory(item: MemoryItem): Promise<string> {
     const memory: MemoryItem = {
-      id: this.generateId(),
-      timestamp: new Date(),
-      ...item
+      ...item,
+      timestamp: item.timestamp || new Date()
     };
+
+    // If no ID is provided, generate one
+    if (!memory.id) {
+      memory.id = this.generateId();
+    }
 
     this.memories.unshift(memory);
 
@@ -59,17 +63,19 @@ export class MemoryManager {
     }
 
     if (this.persistToFile) {
-      this.saveToFile();
+      await this.saveToFile();
     }
 
     return memory.id;
   }
 
-  addConversation(messages: AIMessage[]): string {
+  async addConversation(messages: AIMessage[]): Promise<string> {
     const content = messages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n');
-    return this.addMemory({
+    return await this.addMemory({
+      id: this.generateId(),
       type: 'conversation',
       content,
+      timestamp: new Date(),
       metadata: {
         messageCount: messages.length,
         participants: [...new Set(messages.map(msg => msg.role))]
@@ -77,10 +83,12 @@ export class MemoryManager {
     });
   }
 
-  addFileContext(filePath: string, content: string, operation?: string): string {
-    return this.addMemory({
+  async addFileContext(filePath: string, content: string, operation?: string): Promise<string> {
+    return await this.addMemory({
+      id: this.generateId(),
       type: 'file',
       content,
+      timestamp: new Date(),
       metadata: {
         filePath,
         operation: operation || 'read',
@@ -89,10 +97,12 @@ export class MemoryManager {
     });
   }
 
-  addCommand(command: string, output: string, success: boolean): string {
-    return this.addMemory({
+  async addCommand(command: string, output: string, success: boolean): Promise<string> {
+    return await this.addMemory({
+      id: this.generateId(),
       type: 'command',
       content: `Command: ${command}\nOutput: ${output}`,
+      timestamp: new Date(),
       metadata: {
         command,
         success,
@@ -101,18 +111,20 @@ export class MemoryManager {
     });
   }
 
-  addContext(context: string, type = 'context'): string {
-    return this.addMemory({
-      type: type as any,
-      content: context
+  async addContext(context: string, type = 'context'): Promise<string> {
+    return await this.addMemory({
+      id: this.generateId(),
+      type: type as 'conversation' | 'file' | 'context' | 'command',
+      content: context,
+      timestamp: new Date()
     });
   }
 
-  searchMemories(query: string, options?: {
+  async searchMemories(query: string, options?: {
     type?: MemoryItem['type'];
     limit?: number;
     minRelevanceScore?: number;
-  }): MemoryItem[] {
+  }): Promise<MemoryItem[]> {
     const { type, limit = 10, minRelevanceScore = 0 } = options || {};
     
     let filtered = this.memories;
@@ -145,10 +157,9 @@ export class MemoryManager {
     });
 
     return scored
-      .filter(memory => memory.relevanceScore >= minRelevanceScore)
-      .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, limit)
-      .map(({ relevanceScore, ...memory }) => memory);
+      .filter(memory => (memory.relevanceScore || 0) >= minRelevanceScore)
+      .sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0))
+      .slice(0, limit);
   }
 
   getRecentMemories(limit = 10, type?: MemoryItem['type']): MemoryItem[] {
@@ -165,19 +176,25 @@ export class MemoryManager {
     return this.memories.find(memory => memory.id === id);
   }
 
-  removeMemory(id: string): boolean {
+  async deleteMemory(id: string): Promise<boolean> {
     const index = this.memories.findIndex(memory => memory.id === id);
     if (index !== -1) {
       this.memories.splice(index, 1);
       if (this.persistToFile) {
-        this.saveToFile();
+        await this.saveToFile();
       }
       return true;
     }
     return false;
   }
+  
+  // Alias for backward compatibility
+  removeMemory(id: string): boolean {
+    this.deleteMemory(id);
+    return true;
+  }
 
-  clearMemories(type?: MemoryItem['type']): void {
+  async clearMemories(type?: MemoryItem['type']): Promise<void> {
     if (type) {
       this.memories = this.memories.filter(memory => memory.type !== type);
     } else {
@@ -185,8 +202,24 @@ export class MemoryManager {
     }
 
     if (this.persistToFile) {
-      this.saveToFile();
+      await this.saveToFile();
     }
+  }
+  
+  async deleteMemoriesByType(type: MemoryItem['type']): Promise<number> {
+    const initialCount = this.memories.length;
+    this.memories = this.memories.filter(memory => memory.type !== type);
+    const deletedCount = initialCount - this.memories.length;
+    
+    if (this.persistToFile) {
+      await this.saveToFile();
+    }
+    
+    return deletedCount;
+  }
+  
+  async getAllMemories(): Promise<MemoryItem[]> {
+    return [...this.memories];
   }
 
   getMemoryStats(): {

@@ -82,11 +82,16 @@ export class OllamaClient {
         },
         stream: false
       });
+    // Remove thinking tags from content if present
+    let content = response.message.content;
+    if (content && content.includes('<think>') && content.includes('</think>')) {
+      content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    }
 
-      return {
-        message: response.message.content,
-        toolCalls: response.message.tool_calls || []
-      };
+    return {
+      message: content,
+      toolCalls: response.message.tool_calls || []
+    };
     } catch (error) {
       throw new Error(`Chat request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

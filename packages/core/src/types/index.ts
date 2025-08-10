@@ -2,7 +2,7 @@
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
-  timestamp: Date;
+  timestamp?: Date;
   toolCall?: {
     tool: string;
     parameters: Record<string, unknown>;
@@ -82,7 +82,7 @@ export interface AppConfig {
   currentModel: string;
   maxTokens: number;
   temperature: number;
-  systemPrompt?: string;
+  systemPrompt: string;
   workingDirectory: string;
   enabledTools: string[];
   plugins: string[];
