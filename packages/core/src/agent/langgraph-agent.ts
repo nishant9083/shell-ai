@@ -65,7 +65,6 @@ export class LangGraphAgent {
           const messages = (values as any)['messages'];
           if (processedMessageIds.has(messages[messages.length - 1].id)) continue;
           processedMessageIds.add(messages[messages.length - 1].id);
-
           if (messages[messages.length - 1] instanceof AIMessage) {
             const res = String(messages[messages.length - 1].content);
             if (res !== '') {

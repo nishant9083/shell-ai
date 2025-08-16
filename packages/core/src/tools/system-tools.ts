@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
@@ -5,8 +6,19 @@ import * as path from 'path';
 import fs from 'fs-extra';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
+import { minimatch } from 'minimatch';
 
 const execAsync = promisify(exec);
+
+      const isExcluded = (filePath: string, absolutePath: string, exP: string[]): boolean => {
+        // Get path relative to the base directory
+        const relPath = path.relative(absolutePath, filePath);
+
+        // Check if the path matches any exclude pattern
+        return (exP as string[]).some(pattern =>
+          minimatch(relPath, pattern, { dot: true })
+        );
+      };
 
 export const ShellExecTool = new DynamicStructuredTool({
   name: 'shell-exec',
@@ -149,6 +161,39 @@ export const DirectoryListTool = new DynamicStructuredTool({
       .number()
       .default(10)
       .describe('Maximum directory depth for recursive listing (default: 10)'),
+    excludePaths: z
+      .array(z.string())
+      .default([
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/.svn/**',
+        '**/.hg/**',
+        '**/CVS/**',
+        '**/.DS_Store',
+        '**/Thumbs.db',
+        '**/*.tmp',
+        '**/*.temp',
+        '**/*.log',
+        '**/dist/**',
+        '**/build/**',
+        '**/out/**',
+        '**/target/**',
+        '**/.vscode/**',
+        '**/.idea/**',
+        '**/*.suo',
+        '**/*.user',
+        '**/.vs/**',
+        '**/bin/**',
+        '**/obj/**',
+        '**/.cache/**',
+        '**/.next/**',
+        '**/.nuxt/**',
+        '**/coverage/**',
+        '**/.nyc_output/**',
+        '**/bower_components/**',
+        '**/vendor/**',
+      ])
+      .describe('Paths to exclude from the directory listing'),
   }),
 
   func: async (params: Record<string, unknown>) => {
@@ -158,9 +203,43 @@ export const DirectoryListTool = new DynamicStructuredTool({
       showHidden = false,
       includeStats = false,
       filterExtensions,
-      maxDepth = 10,
+      maxDepth = 4,
+      excludePaths = [],
     } = params;
 
+    const exP = [
+      ...(excludePaths as string[]),
+      ...[
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/.svn/**',
+        '**/.hg/**',
+        '**/CVS/**',
+        '**/.DS_Store',
+        '**/Thumbs.db',
+        '**/*.tmp',
+        '**/*.temp',
+        '**/*.log',
+        '**/dist/**',
+        '**/build/**',
+        '**/out/**',
+        '**/target/**',
+        '**/.vscode/**',
+        '**/.idea/**',
+        '**/*.suo',
+        '**/*.user',
+        '**/.vs/**',
+        '**/bin/**',
+        '**/obj/**',
+        '**/.cache/**',
+        '**/.next/**',
+        '**/.nuxt/**',
+        '**/coverage/**',
+        '**/.nyc_output/**',
+        '**/bower_components/**',
+        '**/vendor/**',
+      ],
+    ];
     try {
       const absolutePath = path.resolve(dirPath as string);
 
@@ -186,12 +265,19 @@ export const DirectoryListTool = new DynamicStructuredTool({
       const listDirectory = async (currentPath: string, depth = 0) => {
         if (depth > (maxDepth as number)) return;
 
+        // Skip if this directory matches an exclude pattern
+        if (currentPath !== absolutePath && isExcluded(currentPath, absolutePath, exP)) return;
+
         const entries = await fs.readdir(currentPath);
 
         for (const entry of entries) {
           if (!showHidden && entry.startsWith('.')) continue;
 
           const entryPath = path.join(currentPath, entry);
+
+          // Skip if this path matches an exclude pattern
+          if (isExcluded(entryPath, absolutePath, exP)) continue;
+
           const entryStat = await fs.stat(entryPath);
           const isDirectory = entryStat.isDirectory();
 
@@ -267,6 +353,37 @@ export const CurrentDirectoryTool = new DynamicStructuredTool({
   func: async (params: Record<string, unknown>) => {
     const { showHidden = false, includeStats = true, sortBy = 'name' } = params;
 
+    const exP = [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/.svn/**',
+        '**/.hg/**',
+        '**/CVS/**',
+        '**/.DS_Store',
+        '**/Thumbs.db',
+        '**/*.tmp',
+        '**/*.temp',
+        '**/*.log',
+        '**/dist/**',
+        '**/build/**',
+        '**/out/**',
+        '**/target/**',
+        '**/.vscode/**',
+        '**/.idea/**',
+        '**/*.suo',
+        '**/*.user',
+        '**/.vs/**',
+        '**/bin/**',
+        '**/obj/**',
+        '**/.cache/**',
+        '**/.next/**',
+        '**/.nuxt/**',
+        '**/coverage/**',
+        '**/.nyc_output/**',
+        '**/bower_components/**',
+        '**/vendor/**',      
+    ];
+
     try {
       const currentPath = process.cwd();
       const entries = await fs.readdir(currentPath);
@@ -283,6 +400,8 @@ export const CurrentDirectoryTool = new DynamicStructuredTool({
         if (!showHidden && entry.startsWith('.')) continue;
 
         const entryPath = path.join(currentPath, entry);
+
+        if (isExcluded(entryPath, currentPath, exP)) continue;
         const entryStat = await fs.stat(entryPath);
         const isDirectory = entryStat.isDirectory();
 

@@ -3,6 +3,7 @@ import * as path from 'path';
 import fs from 'fs-extra';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
+import { minimatch } from 'minimatch';
 
 export interface GrepMatch {
   line: number;
@@ -231,6 +232,14 @@ function matchesPattern(filename: string, pattern: string): boolean {
   return regex.test(filename);
 }
 
+const isExcluded = (filePath: string, absolutePath: string, exP: string[]): boolean => {
+  // Get path relative to the base directory
+  const relPath = path.relative(absolutePath, filePath);
+
+  // Check if the path matches any exclude pattern
+  return (exP as string[]).some(pattern => minimatch(relPath, pattern, { dot: true }));
+};
+
 async function searchInFile(
   filePath: string,
   regex: RegExp,
@@ -345,7 +354,16 @@ export const FileGrepTool = new DynamicStructuredTool({
       rootDirectory = process.cwd(),
       recursive = true,
       type = 'all',
-      excludePaths = [
+      excludePaths,
+      maxDepth = 5,
+      maxResults = 500,
+      hidden = false,
+      sortBy = 'path',
+    } = params;
+
+    const exP = [
+      ...(excludePaths as string[]),
+      ...[
         '**/node_modules/**',
         '**/.git/**',
         '**/.svn/**',
@@ -375,11 +393,7 @@ export const FileGrepTool = new DynamicStructuredTool({
         '**/bower_components/**',
         '**/vendor/**',
       ],
-      maxDepth = 15,
-      maxResults = 1000,
-      hidden = false,
-      sortBy = 'path',
-    } = params;
+    ];
 
     if (typeof pattern !== 'string') {
       return { success: false, error: 'Pattern parameter must be a string' };
@@ -413,7 +427,7 @@ export const FileGrepTool = new DynamicStructuredTool({
       await findMatches(absoluteRootDir, pattern as string, results, {
         recursive: recursive as boolean,
         type: type as 'all' | 'file' | 'directory',
-        excludePaths: Array.isArray(excludePaths) ? (excludePaths as string[]) : [],
+        excludePaths: exP,
         maxDepth: maxDepth as number,
         maxResults: maxResults as number,
         hidden: hidden as boolean,
@@ -478,6 +492,7 @@ async function findMatches(
       }
 
       const fullPath = path.join(directory, entry);
+      if (isExcluded(fullPath, directory, options.excludePaths)) continue;
       const relativePath = path.relative(process.cwd(), fullPath).replace(/\\/g, '/');
       const isHidden = entry.startsWith('.');
 

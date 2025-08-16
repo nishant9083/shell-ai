@@ -28,6 +28,9 @@ A powerful, lightweight command-line interface for interacting with local AI mod
   - [Contributing](#contributing)
   - [License](#license)
 
+
+![Shell AI Demo](demo/demo.mp4)
+
 ## Installation
 ```bash
 npm install -g @shell-ai/cli
