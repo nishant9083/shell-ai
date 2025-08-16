@@ -1,0 +1,55 @@
+# Source files
+src/
+packages/*/src/
+*.ts
+!*.d.ts
+
+# Development files
+.git/
+.github/
+.vscode/
+.env*
+.eslintrc.*
+.prettierrc*
+tsconfig*.json
+jest.config.*
+*.test.*
+*.spec.*
+coverage/
+
+# Build artifacts
+.tsbuildinfo
+*.tgz
+node_modules/.cache
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Logs
+*.log
+logs/
+
+# IDE files
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+
+# Development dependencies
+husky/
+.husky/
+lint-staged
+
+# Memory and config files
+*.ai-memory
+.ai-cli-config
+.shell-ai

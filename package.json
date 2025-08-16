@@ -1,27 +1,39 @@
 {
-  "name": "ai-cli",
-  "version": "0.1.0",
+  "name": "shell-ai",
+  "version": "1.0.0",
   "type": "module",
-  "description": "A complete recreation of Google's Gemini-CLI using Ollama for local AI processing",
-  "private": true,
+  "description": "Intelligent shell assistant powered by local AI models through Ollama",
+  "private": false,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces",
-    "build:core": "npm run build --workspace @ai-cli/core",
-    "build:cli": "npm run build --workspace @ai-cli/cli",
-    "dev": "npm run dev --workspace @ai-cli/cli",
-    "start": "npm run start --workspace @ai-cli/cli",
+    "build:core": "npm run build --workspace @shell-ai/core",
+    "build:cli": "npm run build --workspace @shell-ai/cli",
+    "dev": "npm run dev --workspace @shell-ai/cli",
+    "start": "npm run start --workspace @shell-ai/cli",
     "clean": "npm run clean --workspaces && rimraf dist node_modules/.cache",
-    "lint": "eslint packages --ext .ts,.tsx --fix",
-    "lint:check": "eslint packages --ext .ts,.tsx",
+    "lint": "eslint packages",
+    "lint:fix": "eslint packages --fix",
     "type-check": "npm run type-check --workspaces",
-    "test": "npm run test --workspaces",
+    "test": "jest",
+    "test:core": "npm run test --workspace @shell-ai/core",
+    "test:cli": "npm run test --workspace @shell-ai/cli",
+    "test:integration": "jest packages/core/src/__tests__/integration.test.ts packages/cli/src/__tests__/cli-integration.test.ts",
+    "test:coverage": "jest --coverage",
+    "test:watch": "jest --watch",
     "prepare": "husky install",
-    "version": "node scripts/version.js"
+    "version": "node scripts/version.js",
+    "prepublishOnly": "npm run build && npm run test && npm run lint:check",
+    "prepack": "npm run build",
+    "postpack": "npm run clean",
+    "publish:cli": "npm publish --workspace @shell-ai/cli --access public",
+    "publish:core": "npm publish --workspace @shell-ai/core --access public",
+    "publish:all": "npm run publish:core && npm run publish:cli"
   },
   "devDependencies": {
+    "@jest/globals": "^30.0.5",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
@@ -29,6 +41,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-prettier": "^5.1.2",
+    "eslint-plugin-unused-imports": "^4.1.4",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
     "prettier": "^3.1.1",
@@ -36,28 +49,34 @@
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=20.18.1",
     "npm": ">=8.0.0"
   },
   "keywords": [
+    "shell",
     "ai",
+    "assistant",
     "cli",
     "ollama",
     "typescript",
     "local-ai",
     "terminal",
-    "assistant"
+    "automation",
+    "agent",
+    "terminal ai",
+    "shell assistant",
+    "command line"
   ],
-  "author": "AI-CLI Team",
+  "author": "Nishant Verma",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/ai-cli.git"
+    "url": "https://github.com/nishant9083/shell-ai.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/ai-cli/issues"
+    "url": "https://github.com/nishant9083/shell-ai/issues"
   },
-  "homepage": "https://github.com/your-username/ai-cli#readme",
+  "homepage": "https://github.com/nishant9083/shell-ai#README",
   "lint-staged": {
     "*.{ts,tsx}": [
       "eslint --fix",
@@ -68,7 +87,15 @@
     ]
   },
   "dependencies": {
+    "@eslint/js": "^9.33.0",
+    "@langchain/core": "^0.3.68",
+    "@langchain/langgraph": "^0.4.3",
+    "@langchain/ollama": "^0.2.3",
     "@types/uuid": "^10.0.0",
+    "ink-testing-library": "^4.0.0",
+    "marked": "^15.0.12",
+    "marked-terminal": "^7.3.0",
+    "typescript-eslint": "^8.39.1",
     "uuid": "^11.1.0"
   }
 }

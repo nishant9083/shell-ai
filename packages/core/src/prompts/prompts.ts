@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2025 AI-CLI Contributors
+ * Copyright 2025 Shell AI Contributors
  * SPDX-License-Identifier: MIT
  */
 
@@ -8,24 +8,24 @@ import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
 import process from 'node:process';
-import { isGitRepository } from '../utils/index.js';
-import { MemoryManager } from '../memory/memory-manager.js';
 
-// Config directory for AI-CLI
-export const AI_CLI_CONFIG_DIR = path.join(os.homedir(), '.ai-cli');
+import { isGitRepository } from '../utils/index.js';
+
+// Config directory for Shell AI
+export const SHELL_AI_CONFIG_DIR = path.join(os.homedir(), '.shell-ai');
 
 /**
- * Get the core system prompt for the AI-CLI assistant
+ * Get the core system prompt for the Shell AI assistant
  * @param userMemory Optional string containing user-specific memory context
  * @returns The formatted system prompt
  */
 export function getCoreSystemPrompt(userMemory?: string): string {
   // Allow system prompt override from file
-  // Default path is ~/.ai-cli/system.md but can be modified via AI_CLI_SYSTEM_MD env var
+  // Default path is ~/.shell-ai/system.md but can be modified via SHELL_AI_SYSTEM_MD env var
   let systemMdEnabled = false;
-  let systemMdPath = path.resolve(path.join(AI_CLI_CONFIG_DIR, 'system.md'));
-  
-  const systemMdVar = process.env.AI_CLI_SYSTEM_MD;
+  let systemMdPath = path.resolve(path.join(SHELL_AI_CONFIG_DIR, 'system.md'));
+
+  const systemMdVar = process.env.SHELL_AI_SYSTEM_MD;
   if (systemMdVar) {
     const systemMdVarLower = systemMdVar.toLowerCase();
     if (!['0', 'false'].includes(systemMdVarLower)) {
@@ -220,9 +220,7 @@ Your core function is efficient and safe assistance. Balance conciseness with cl
   }
 
   const memorySuffix =
-    userMemory && userMemory.trim().length > 0
-      ? `\n\n---\n\n${userMemory.trim()}`
-      : '';
+    userMemory && userMemory.trim().length > 0 ? `\n\n---\n\n${userMemory.trim()}` : '';
 
   return `${basePrompt}${memorySuffix}`;
 }
@@ -247,7 +245,7 @@ The structure MUST follow this format:
 <state_snapshot>
     <overall_goal>
         <!-- A single, concise sentence describing the user's high-level objective. -->
-        <!-- Example: "Implement a web search feature in the AI-CLI tool." -->
+        <!-- Example: "Implement a web search feature in the Shell AI tool." -->
     </overall_goal>
 
     <key_knowledge>
@@ -262,7 +260,7 @@ The structure MUST follow this format:
     <file_system_state>
         <!-- List files that have been created, read, modified, or deleted. Note their status and critical learnings. -->
         <!-- Example:
-         - CWD: \`/path/to/ai-cli\`
+         - CWD: \`/path/to/shell-ai\`
          - READ: \`package.json\` - Confirmed axios is a dependency
          - MODIFIED: \`src/tools/web-search.ts\` - Implemented WebSearchTool class
          - CREATED: \`src/tests/web-search.test.ts\` - Added tests for the new feature
@@ -300,7 +298,7 @@ The structure MUST follow this format:
  */
 export function getProblemSolvingPrompt(context?: string): string {
   const basePrompt = `
-You are a specialized problem-solving agent for AI-CLI. Your task is to analyze complex software problems and develop robust solutions.
+You are a specialized problem-solving agent for Shell AI. Your task is to analyze complex software problems and develop robust solutions.
 
 When approaching a problem:
 
@@ -336,7 +334,7 @@ Your response should be structured, methodical, and focused on providing practic
  */
 export function getMemoryRetrievalPrompt(): string {
   return `
-You are a specialized memory retrieval agent for AI-CLI. Your task is to analyze the query and return the most relevant information from the memory store.
+You are a specialized memory retrieval agent for Shell AI. Your task is to analyze the query and return the most relevant information from the memory store.
 
 When processing memory retrieval requests:
 

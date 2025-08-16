@@ -1,7 +1,9 @@
-import fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
-import { MemoryItem, AIMessage } from '../types/index.js';
+
+import fs from 'fs-extra';
+
+import { MemoryItem, ChatMessage } from '../types/index.js';
 
 export class MemoryManager {
   private memories: MemoryItem[] = [];
@@ -12,8 +14,8 @@ export class MemoryManager {
   constructor(maxMemories = 100, persistToFile = true, filePath?: string) {
     this.maxMemories = maxMemories;
     this.persistToFile = persistToFile;
-    this.filePath = filePath || path.join(os.homedir(), '.ai-cli', 'memory.json');
-    
+    this.filePath = filePath || path.join(os.homedir(), '.shell-ai', 'memory.json');
+
     if (this.persistToFile) {
       this.loadFromFile();
     }
@@ -25,7 +27,7 @@ export class MemoryManager {
         const data = await fs.readJson(this.filePath);
         this.memories = data.map((item: any) => ({
           ...item,
-          timestamp: new Date(item.timestamp)
+          timestamp: new Date(item.timestamp),
         }));
       }
     } catch (error) {
@@ -47,7 +49,7 @@ export class MemoryManager {
   async addMemory(item: MemoryItem): Promise<string> {
     const memory: MemoryItem = {
       ...item,
-      timestamp: item.timestamp || new Date()
+      timestamp: item.timestamp || new Date(),
     };
 
     // If no ID is provided, generate one
@@ -69,7 +71,7 @@ export class MemoryManager {
     return memory.id;
   }
 
-  async addConversation(messages: AIMessage[]): Promise<string> {
+  async addConversation(messages: ChatMessage[]): Promise<string> {
     const content = messages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n');
     return await this.addMemory({
       id: this.generateId(),
@@ -78,8 +80,8 @@ export class MemoryManager {
       timestamp: new Date(),
       metadata: {
         messageCount: messages.length,
-        participants: [...new Set(messages.map(msg => msg.role))]
-      }
+        participants: [...new Set(messages.map(msg => msg.role))],
+      },
     });
   }
 
@@ -92,8 +94,8 @@ export class MemoryManager {
       metadata: {
         filePath,
         operation: operation || 'read',
-        size: content.length
-      }
+        size: content.length,
+      },
     });
   }
 
@@ -106,8 +108,8 @@ export class MemoryManager {
       metadata: {
         command,
         success,
-        outputLength: output.length
-      }
+        outputLength: output.length,
+      },
     });
   }
 
@@ -116,17 +118,20 @@ export class MemoryManager {
       id: this.generateId(),
       type: type as 'conversation' | 'file' | 'context' | 'command',
       content: context,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
-  async searchMemories(query: string, options?: {
-    type?: MemoryItem['type'];
-    limit?: number;
-    minRelevanceScore?: number;
-  }): Promise<MemoryItem[]> {
+  async searchMemories(
+    query: string,
+    options?: {
+      type?: MemoryItem['type'];
+      limit?: number;
+      minRelevanceScore?: number;
+    }
+  ): Promise<MemoryItem[]> {
     const { type, limit = 10, minRelevanceScore = 0 } = options || {};
-    
+
     let filtered = this.memories;
 
     // Filter by type if specified
@@ -134,15 +139,15 @@ export class MemoryManager {
       filtered = filtered.filter(memory => memory.type === type);
     }
 
-    // Simple text search (in a real implementation, you might want to use 
+    // Simple text search (in a real implementation, you might want to use
     // more sophisticated search like vector similarity)
     const searchTerms = query.toLowerCase().split(/\s+/);
-    
+
     const scored = filtered.map(memory => {
       const content = memory.content.toLowerCase();
       const metadata = JSON.stringify(memory.metadata || {}).toLowerCase();
-      const searchText = `${content} ${metadata}`;
-      
+      // const searchText = `${content} ${metadata}`;
+
       let score = 0;
       searchTerms.forEach(term => {
         const contentMatches = (content.match(new RegExp(term, 'g')) || []).length;
@@ -152,7 +157,7 @@ export class MemoryManager {
 
       return {
         ...memory,
-        relevanceScore: score
+        relevanceScore: score,
       };
     });
 
@@ -164,7 +169,7 @@ export class MemoryManager {
 
   getRecentMemories(limit = 10, type?: MemoryItem['type']): MemoryItem[] {
     let filtered = this.memories;
-    
+
     if (type) {
       filtered = filtered.filter(memory => memory.type === type);
     }
@@ -187,7 +192,7 @@ export class MemoryManager {
     }
     return false;
   }
-  
+
   // Alias for backward compatibility
   removeMemory(id: string): boolean {
     this.deleteMemory(id);
@@ -205,19 +210,19 @@ export class MemoryManager {
       await this.saveToFile();
     }
   }
-  
+
   async deleteMemoriesByType(type: MemoryItem['type']): Promise<number> {
     const initialCount = this.memories.length;
     this.memories = this.memories.filter(memory => memory.type !== type);
     const deletedCount = initialCount - this.memories.length;
-    
+
     if (this.persistToFile) {
       await this.saveToFile();
     }
-    
+
     return deletedCount;
   }
-  
+
   async getAllMemories(): Promise<MemoryItem[]> {
     return [...this.memories];
   }
@@ -229,18 +234,20 @@ export class MemoryManager {
     newestMemory?: Date;
   } {
     const byType: Record<string, number> = {};
-    
+
     this.memories.forEach(memory => {
       byType[memory.type] = (byType[memory.type] || 0) + 1;
     });
 
     const timestamps = this.memories.map(m => m.timestamp);
-    
+
     return {
       total: this.memories.length,
       byType,
-      oldestMemory: timestamps.length > 0 ? new Date(Math.min(...timestamps.map(t => t.getTime()))) : undefined,
-      newestMemory: timestamps.length > 0 ? new Date(Math.max(...timestamps.map(t => t.getTime()))) : undefined
+      oldestMemory:
+        timestamps.length > 0 ? new Date(Math.min(...timestamps.map(t => t.getTime()))) : undefined,
+      newestMemory:
+        timestamps.length > 0 ? new Date(Math.max(...timestamps.map(t => t.getTime()))) : undefined,
     };
   }
 

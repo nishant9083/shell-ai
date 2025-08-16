@@ -1,20 +1,19 @@
-// Common types used throughout AI-CLI
-export interface AIMessage {
+// Common types used throughout Shell AI
+export interface ChatMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
-  timestamp?: Date;
+  timestamp: Date;
   toolCall?: {
     tool: string;
     parameters: Record<string, unknown>;
-    result?: ToolResult;
+    result?: any;
   };
-  thinking?: boolean;
-  streaming?: boolean;
+  display: boolean;
 }
 
 export interface ChatSession {
   id: string;
-  messages: AIMessage[];
+  messages: ChatMessage[];
   model: string;
   createdAt: Date;
   updatedAt: Date;
@@ -78,7 +77,6 @@ export interface CommandContext {
 
 export interface AppConfig {
   ollamaUrl: string;
-  defaultModel: string;
   currentModel: string;
   maxTokens: number;
   temperature: number;
@@ -115,4 +113,12 @@ export interface MemoryItem {
   timestamp: Date;
   metadata?: Record<string, unknown>;
   relevanceScore?: number;
+}
+
+export interface AgentCallbacks {
+  onThinking: (thought: string) => void;
+  onToolCall: (tool: string, params: Record<string, unknown>) => void;
+  onConfirmation: (content: string) => Promise<boolean>;
+  onResponse: (response: string) => void;
+  onError: (error: string) => void;
 }

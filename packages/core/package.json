@@ -1,8 +1,8 @@
 {
-  "name": "@ai-cli/core",
-  "version": "0.1.0",
+  "name": "@shell-ai/core",
+  "version": "1.0.0",
   "type": "module",
-  "description": "Core functionality for AI-CLI - Ollama integration, tools, and utilities",
+  "description": "Core functionality for Shell AI - Ollama integration, tools, and utilities",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -50,20 +50,29 @@
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.18.1"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
+    "shell",
     "ai",
     "ollama",
     "core",
     "tools",
     "utilities"
   ],
-  "author": "AI-CLI Team",
+  "author": "Shell AI Team",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/ai-cli.git",
+    "url": "https://github.com/nishant9083/shell-ai.git",
     "directory": "packages/core"
   }
 }

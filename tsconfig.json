@@ -23,6 +23,8 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "exactOptionalPropertyTypes": false,
     "noImplicitOverride": true,
     "useUnknownInCatchVariables": true,
@@ -34,14 +36,14 @@
     "lib": ["ES2022", "DOM"],
     "types": ["node"],
     "paths": {
-      "@ai-cli/core": ["./packages/core/src"],
-      "@ai-cli/core/*": ["./packages/core/src/*"],
-      "@ai-cli/cli": ["./packages/cli/src"],
-      "@ai-cli/cli/*": ["./packages/cli/src/*"]
+      "@shell-ai/core": ["./packages/core/src"],
+      "@shell-ai/core/*": ["./packages/core/src/*"],
+      "@shell-ai/cli": ["./packages/cli/src"],
+      "@shell-ai/cli/*": ["./packages/cli/src/*"]
     }
   },
   "include": [
-    "packages/*/src/**/*"
+    "packages/*/src/**/*", 
   ],
   "exclude": [
     "node_modules",

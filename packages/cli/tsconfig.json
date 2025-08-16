@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./",
     "composite": true,
     "declaration": true,
     "declarationMap": true,
@@ -10,13 +10,17 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "src/**/*"
+    "src/**/*.ts",
+    "index.ts",
+    "src/**/*.tsx",
+    "package.json"
   ],
   "exclude": [
     "dist",
     "node_modules",
     "**/*.test.ts",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "**/*.js" 
   ],
   "references": [
     { "path": "../core" }

@@ -1,14 +1,21 @@
 import { Ollama, Tool as OllamaTool, Message as OllamaMessage, ToolCall } from 'ollama';
-import { AIMessage, AIModel, AppConfig, Tool, ToolResult } from '../types/index.js';
+import { ChatOllama } from '@langchain/ollama';
+
+import { ChatMessage, AIModel, AppConfig, Tool } from '../types/index.js';
 
 export class OllamaClient {
   private ollama: Ollama;
   private config: AppConfig;
+  private llm: ChatOllama;
 
   constructor(config: AppConfig) {
     this.config = config;
-    this.ollama = new Ollama({ 
-      host: config.ollamaUrl || 'http://localhost:11434'
+    this.ollama = new Ollama({
+      host: config.ollamaUrl,
+    });
+    this.llm = new ChatOllama({
+      model: config.currentModel,
+      baseUrl: config.ollamaUrl,
     });
   }
 
@@ -22,10 +29,11 @@ export class OllamaClient {
         quantization_level: model.details?.quantization_level || 'unknown',
         modified_at: new Date(model.modified_at).toISOString(),
         digest: model.digest,
-        details: model.details
+        details: model.details,
       }));
-    } catch (error) {
-      throw new Error(`Failed to list models: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
+      throw new Error(`Failed to list models: Check the ${this.config.ollamaUrl} is running`);
     }
   }
 
@@ -33,7 +41,9 @@ export class OllamaClient {
     try {
       await this.ollama.pull({ model: modelName });
     } catch (error) {
-      throw new Error(`Failed to pull model ${modelName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to pull model ${modelName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -41,26 +51,36 @@ export class OllamaClient {
     try {
       await this.ollama.delete({ model: modelName });
     } catch (error) {
-      throw new Error(`Failed to delete model ${modelName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to delete model ${modelName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  async chatWithTools(messages: AIMessage[], tools?: Tool[], options?: {
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-    stream?: boolean;
-  }): Promise<{ message: string; toolCalls: ToolCall[] }> {
+  async chatWithTools(
+    messages: ChatMessage[],
+    tools?: Tool[],
+    options?: {
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+      stream?: boolean;
+    }
+  ): Promise<{ message: string; toolCalls: ToolCall[] }> {
     try {
       const ollamaMessages: OllamaMessage[] = messages.map(msg => ({
         role: msg.role,
         content: msg.content,
-        tool_calls: msg.toolCall ? [{
-          function: {
-            name: msg.toolCall.tool,
-            arguments: msg.toolCall.parameters
-          }
-        }] : undefined
+        tool_calls: msg.toolCall
+          ? [
+              {
+                function: {
+                  name: msg.toolCall.tool,
+                  arguments: msg.toolCall.parameters,
+                },
+              },
+            ]
+          : undefined,
       }));
 
       const ollamaTools: OllamaTool[] | undefined = tools?.map(tool => ({
@@ -68,102 +88,86 @@ export class OllamaClient {
         function: {
           name: tool.name,
           description: tool.description,
-          parameters: tool.parameters
-        }
+          parameters: tool.parameters,
+        },
       }));
 
       const response = await this.ollama.chat({
-        model: options?.model || this.config.defaultModel,
+        model: options?.model || this.config.currentModel,
         messages: ollamaMessages,
         tools: ollamaTools,
         options: {
           temperature: options?.temperature ?? this.config.temperature,
-          num_predict: options?.maxTokens ?? this.config.maxTokens
+          num_predict: options?.maxTokens ?? this.config.maxTokens,
         },
-        stream: false
+        stream: false,
       });
-    // Remove thinking tags from content if present
-    let content = response.message.content;
-    if (content && content.includes('<think>') && content.includes('</think>')) {
-      content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
-    }
-
-    return {
-      message: content,
-      toolCalls: response.message.tool_calls || []
-    };
-    } catch (error) {
-      throw new Error(`Chat request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  async chat(messages: AIMessage[], options?: {
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-    stream?: boolean;
-  }): Promise<string> {
-    try {
-      if (options?.stream) {
-        // Handle streaming case differently
-        const stream = await this.ollama.chat({
-          model: options?.model || this.config.defaultModel,
-          messages: messages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          })),
-          options: {
-            temperature: options?.temperature ?? this.config.temperature,
-            num_predict: options?.maxTokens ?? this.config.maxTokens
-          },
-          stream: true
-        });
-        
-        let fullResponse = '';
-        for await (const chunk of stream) {
-          if (chunk.message?.content) {
-            fullResponse += chunk.message.content;
-          }
-        }
-        return fullResponse;
-      } else {
-        const response = await this.ollama.chat({
-          model: options?.model || this.config.defaultModel,
-          messages: messages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          })),
-          options: {
-            temperature: options?.temperature ?? this.config.temperature,
-            num_predict: options?.maxTokens ?? this.config.maxTokens
-          },
-          stream: false
-        });
-
-        return response.message.content;
+      // Remove thinking tags from content if present
+      let content = response.message.content;
+      if (content && content.includes('<think>') && content.includes('</think>')) {
+        content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
       }
+
+      return {
+        message: content,
+        toolCalls: response.message.tool_calls || [],
+      };
     } catch (error) {
-      throw new Error(`Chat request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Chat request failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-  async *chatStream(messages: AIMessage[], options?: {
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-  }): AsyncGenerator<string, void, unknown> {
+  async chat(
+    messages: ChatMessage[],
+    options?: {
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+    }
+  ): Promise<string> {
     try {
-      const stream = await this.ollama.chat({
-        model: options?.model || this.config.defaultModel,
+      const response = await this.ollama.chat({
+        model: options?.model || this.config.currentModel,
         messages: messages.map(msg => ({
           role: msg.role,
-          content: msg.content
+          content: msg.content,
         })),
         options: {
           temperature: options?.temperature ?? this.config.temperature,
-          num_predict: options?.maxTokens ?? this.config.maxTokens
+          num_predict: options?.maxTokens ?? this.config.maxTokens,
         },
-        stream: true
+        stream: false,
+      });
+      return response.message.content;
+    } catch (error) {
+      throw new Error(
+        `Chat request failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  async *chatStream(
+    messages: ChatMessage[],
+    options?: {
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+    }
+  ): AsyncGenerator<string, void, unknown> {
+    try {
+      const stream = await this.ollama.chat({
+        model: options?.model || this.config.currentModel,
+        messages: messages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+        options: {
+          temperature: options?.temperature ?? this.config.temperature,
+          num_predict: options?.maxTokens ?? this.config.maxTokens,
+        },
+        stream: true,
       });
 
       for await (const chunk of stream) {
@@ -172,7 +176,9 @@ export class OllamaClient {
         }
       }
     } catch (error) {
-      throw new Error(`Streaming chat request failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Streaming chat request failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -180,11 +186,13 @@ export class OllamaClient {
     try {
       const response = await this.ollama.embeddings({
         model: model || 'nomic-embed-text',
-        prompt: text
+        prompt: text,
       });
       return response.embedding;
     } catch (error) {
-      throw new Error(`Embedding generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Embedding generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -214,6 +222,10 @@ export class OllamaClient {
     this.config = { ...this.config, ...updates };
     if (updates.ollamaUrl) {
       this.ollama = new Ollama({ host: updates.ollamaUrl });
+      this.llm = new ChatOllama({ baseUrl: updates.ollamaUrl });
     }
+  }
+  getLLM(): ChatOllama {
+    return this.llm;
   }
 }

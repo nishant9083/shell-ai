@@ -1,171 +1,107 @@
 import * as path from 'path';
+
 import fs from 'fs-extra';
-import { BaseTool } from './base-tool.js';
-import { ToolResult } from '../types/index.js';
+import { DynamicStructuredTool } from '@langchain/core/tools';
+import { z } from 'zod';
 
-export class FileReadTool extends BaseTool {
-  name = 'file-read';
-  description = 'Read the contents of a file';
-  parameters = {
-    type: 'object',
-    properties: {
-      path: {
-        type: 'string',
-        description: 'Path to the file to read'
-      },
-      encoding: {
-        type: 'string',
-        description: 'File encoding (default: utf8)',
-        default: 'utf8'
-      }
-    },
-    required: ['path']
-  };
-
-  async execute(params: Record<string, unknown>): Promise<ToolResult> {
-    const { path: filePath, encoding = 'utf8' } = params;
-
-    if (typeof filePath !== 'string') {
-      return this.createResult(false, undefined, 'Path parameter must be a string');
-    }
-
+export const FileReadTool = new DynamicStructuredTool({
+  name: 'file-read',
+  description: 'Read the contents of a file',
+  schema: z.object({
+    path: z.string().describe('Path to the file to read'),
+    encoding: z.string().default('utf8').describe('File encoding (default: utf8)'),
+  }),
+  func: async ({ path: filePath, encoding = 'utf8' }) => {
     try {
       const absolutePath = path.resolve(filePath);
       const content = await fs.readFile(absolutePath, encoding as BufferEncoding);
-      
-      return this.createResult(true, { 
-        content, 
-        path: absolutePath,
-        size: content.length 
+
+      return JSON.stringify({
+        success: true,
+        data: {
+          content,
+          path: absolutePath,
+          size: content.length,
+        },
       });
     } catch (error) {
-      return this.createResult(false, undefined, `Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return JSON.stringify({
+        success: false,
+        error: `Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
     }
-  }
-}
+  },
+});
 
-export class FileWriteTool extends BaseTool {
-  name = 'file-write';
-  description = 'Write content to a file';
-  parameters = {
-    type: 'object',
-    properties: {
-      path: {
-        type: 'string',
-        description: 'Path to the file to write'
-      },
-      content: {
-        type: 'string',
-        description: 'Content to write to the file'
-      },
-      encoding: {
-        type: 'string',
-        description: 'File encoding (default: utf8)',
-        default: 'utf8'
-      },
-      createDirectories: {
-        type: 'boolean',
-        description: 'Create parent directories if they don\'t exist (default: true)',
-        default: true
-      }
-    },
-    required: ['path', 'content']
-  };
-
-  async execute(params: Record<string, unknown>): Promise<ToolResult> {
-    const { path: filePath, content, encoding = 'utf8', createDirectories = true } = params;
-
-    if (typeof filePath !== 'string') {
-      return this.createResult(false, undefined, 'Path parameter must be a string');
-    }
-
-    if (typeof content !== 'string') {
-      return this.createResult(false, undefined, 'Content parameter must be a string');
-    }
-
+export const FileWriteTool = new DynamicStructuredTool({
+  name: 'file-write',
+  description: 'Write content to a file',
+  schema: z.object({
+    path: z.string().describe('Path to the file to write'),
+    content: z.string().describe('Content to write to the file'),
+    encoding: z.string().default('utf8').describe('File encoding (default: utf8)'),
+    createDirectories: z
+      .boolean()
+      .default(true)
+      .describe("Create parent directories if they don't exist (default: true)"),
+  }),
+  func: async ({ path: filePath, content, encoding = 'utf8', createDirectories = true }) => {
     try {
       const absolutePath = path.resolve(filePath);
-      
+
       if (createDirectories) {
         await fs.ensureDir(path.dirname(absolutePath));
       }
 
       await fs.writeFile(absolutePath, content, encoding as BufferEncoding);
-      
-      return this.createResult(true, { 
-        path: absolutePath,
-        bytesWritten: Buffer.byteLength(content, encoding as BufferEncoding)
+
+      return JSON.stringify({
+        success: true,
+        data: {
+          path: absolutePath,
+          bytesWritten: Buffer.byteLength(content, encoding as BufferEncoding),
+        },
       });
     } catch (error) {
-      return this.createResult(false, undefined, `Failed to write file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return JSON.stringify({
+        success: false,
+        error: `Failed to write file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
     }
-  }
-}
+  },
+});
 
-export class FileEditTool extends BaseTool {
-  name = 'file-edit';
-  description = 'Edit specific lines in a file or perform find-and-replace operations';
-  parameters = {
-    type: 'object',
-    properties: {
-      path: {
-        type: 'string',
-        description: 'Path to the file to edit'
-      },
-      operation: {
-        type: 'string',
-        enum: ['replace-lines', 'insert-lines', 'delete-lines', 'find-replace'],
-        description: 'Type of edit operation to perform'
-      },
-      startLine: {
-        type: 'number',
-        description: 'Start line number (1-based) for line operations'
-      },
-      endLine: {
-        type: 'number',
-        description: 'End line number (1-based) for line operations'
-      },
-      content: {
-        type: 'string',
-        description: 'New content for replace/insert operations'
-      },
-      searchPattern: {
-        type: 'string',
-        description: 'Pattern to search for in find-replace operations'
-      },
-      replaceWith: {
-        type: 'string',
-        description: 'Text to replace the search pattern with'
-      },
-      useRegex: {
-        type: 'boolean',
-        description: 'Use regular expressions for find-replace (default: false)',
-        default: false
-      }
-    },
-    required: ['path', 'operation']
-  };
-
-  async execute(params: Record<string, unknown>): Promise<ToolResult> {
-    const { 
-      path: filePath, 
-      operation, 
-      startLine, 
-      endLine, 
-      content, 
-      searchPattern, 
-      replaceWith, 
-      useRegex = false 
-    } = params;
-
-    if (typeof filePath !== 'string') {
-      return this.createResult(false, undefined, 'Path parameter must be a string');
-    }
-
-    if (typeof operation !== 'string') {
-      return this.createResult(false, undefined, 'Operation parameter must be a string');
-    }
-
+export const FileEditTool = new DynamicStructuredTool({
+  name: 'file-edit',
+  description: 'Edit specific lines in a file or perform find-and-replace operations',
+  schema: z.object({
+    path: z.string().describe('Path to the file to edit'),
+    operation: z
+      .enum(['replace-lines', 'insert-lines', 'delete-lines', 'find-replace'])
+      .describe('Type of edit operation to perform'),
+    startLine: z.number().optional().describe('Start line number (1-based) for line operations'),
+    endLine: z.number().optional().describe('End line number (1-based) for line operations'),
+    content: z.string().optional().describe('New content for replace/insert operations'),
+    searchPattern: z
+      .string()
+      .optional()
+      .describe('Pattern to search for in find-replace operations'),
+    replaceWith: z.string().optional().describe('Text to replace the search pattern with'),
+    useRegex: z
+      .boolean()
+      .default(false)
+      .describe('Use regular expressions for find-replace (default: false)'),
+  }),
+  func: async ({
+    path: filePath,
+    operation,
+    startLine,
+    endLine,
+    content,
+    searchPattern,
+    replaceWith,
+    useRegex = false,
+  }) => {
     try {
       const absolutePath = path.resolve(filePath);
       const fileContent = await fs.readFile(absolutePath, 'utf8');
@@ -174,129 +110,129 @@ export class FileEditTool extends BaseTool {
       let newContent: string;
 
       switch (operation) {
-        case 'replace-lines':
-          if (typeof startLine !== 'number' || typeof content !== 'string') {
-            return this.createResult(false, undefined, 'Replace operation requires startLine and content parameters');
+        case 'replace-lines': {
+          if (startLine === undefined || content === undefined) {
+            return JSON.stringify({
+              success: false,
+              error: 'Replace operation requires startLine and content parameters',
+            });
           }
-          const end = typeof endLine === 'number' ? endLine : startLine;
-          const newLines = (content as string).split('\n');
+          const end = endLine ?? startLine;
+          const newLines = content.split('\n');
           lines.splice(startLine - 1, end - startLine + 1, ...newLines);
           newContent = lines.join('\n');
           break;
+        }
 
-        case 'insert-lines':
-          if (typeof startLine !== 'number' || typeof content !== 'string') {
-            return this.createResult(false, undefined, 'Insert operation requires startLine and content parameters');
+        case 'insert-lines': {
+          if (startLine === undefined || content === undefined) {
+            return JSON.stringify({
+              success: false,
+              error: 'Insert operation requires startLine and content parameters',
+            });
           }
-          const insertLines = (content as string).split('\n');
+          const insertLines = content.split('\n');
           lines.splice(startLine - 1, 0, ...insertLines);
           newContent = lines.join('\n');
           break;
+        }
 
-        case 'delete-lines':
-          if (typeof startLine !== 'number') {
-            return this.createResult(false, undefined, 'Delete operation requires startLine parameter');
+        case 'delete-lines': {
+          if (startLine === undefined) {
+            return JSON.stringify({
+              success: false,
+              error: 'Delete operation requires startLine parameter',
+            });
           }
-          const deleteEnd = typeof endLine === 'number' ? endLine : startLine;
+          const deleteEnd = endLine ?? startLine;
           lines.splice(startLine - 1, deleteEnd - startLine + 1);
           newContent = lines.join('\n');
           break;
+        }
 
-        case 'find-replace':
-          if (typeof searchPattern !== 'string' || typeof replaceWith !== 'string') {
-            return this.createResult(false, undefined, 'Find-replace operation requires searchPattern and replaceWith parameters');
+        case 'find-replace': {
+          if (!searchPattern || replaceWith === undefined) {
+            return JSON.stringify({
+              success: false,
+              error: 'Find-replace operation requires searchPattern and replaceWith parameters',
+            });
           }
           if (useRegex) {
-            const regex = new RegExp(searchPattern as string, 'g');
-            newContent = fileContent.replace(regex, replaceWith as string);
+            const regex = new RegExp(searchPattern, 'g');
+            newContent = fileContent.replace(regex, replaceWith);
           } else {
-            newContent = fileContent.split(searchPattern as string).join(replaceWith as string);
+            newContent = fileContent.split(searchPattern).join(replaceWith);
           }
           break;
+        }
 
         default:
-          return this.createResult(false, undefined, `Unsupported operation: ${operation}`);
+          return JSON.stringify({
+            success: false,
+            error: `Unsupported operation: ${operation}`,
+          });
       }
 
       await fs.writeFile(absolutePath, newContent, 'utf8');
 
-      return this.createResult(true, {
-        path: absolutePath,
-        operation,
-        linesAffected: operation === 'find-replace' ? 'N/A' : 
-          (operation === 'delete-lines' ? (typeof endLine === 'number' ? endLine - (startLine as number) + 1 : 1) :
-          (operation === 'insert-lines' ? (content as string).split('\n').length : 
-          (typeof endLine === 'number' ? endLine - (startLine as number) + 1 : 1)))
+      return JSON.stringify({
+        success: true,
+        data: {
+          path: absolutePath,
+          operation,
+          linesAffected:
+            operation === 'find-replace'
+              ? 'N/A'
+              : operation === 'delete-lines'
+                ? endLine && startLine
+                  ? endLine - startLine + 1
+                  : 1
+                : operation === 'insert-lines'
+                  ? content!.split('\n').length
+                  : endLine && startLine
+                    ? endLine - startLine + 1
+                    : 1,
+        },
       });
-
     } catch (error) {
-      return this.createResult(false, undefined, `Failed to edit file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return JSON.stringify({
+        success: false,
+        error: `Failed to edit file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
     }
-  }
-}
+  },
+});
 
-export class FileSearchTool extends BaseTool {
-  name = 'file-search';
-  description = 'Search for text patterns in files';
-  parameters = {
-    type: 'object',
-    properties: {
-      pattern: {
-        type: 'string',
-        description: 'Text pattern to search for'
-      },
-      path: {
-        type: 'string',
-        description: 'File or directory path to search in'
-      },
-      recursive: {
-        type: 'boolean',
-        description: 'Search recursively in subdirectories (default: true)',
-        default: true
-      },
-      useRegex: {
-        type: 'boolean',
-        description: 'Use regular expressions (default: false)',
-        default: false
-      },
-      caseSensitive: {
-        type: 'boolean',
-        description: 'Case sensitive search (default: false)',
-        default: false
-      },
-      fileExtensions: {
-        type: 'array',
-        description: 'Filter by file extensions (e.g., [".ts", ".js"])',
-        items: { type: 'string' }
-      },
-      maxResults: {
-        type: 'number',
-        description: 'Maximum number of results to return (default: 100)',
-        default: 100
-      }
-    },
-    required: ['pattern', 'path']
-  };
-
-  async execute(params: Record<string, unknown>): Promise<ToolResult> {
-    const { 
-      pattern, 
-      path: searchPath, 
-      recursive = true, 
-      useRegex = false, 
-      caseSensitive = false,
-      fileExtensions,
-      maxResults = 100
-    } = params;
-
-    if (typeof pattern !== 'string') {
-      return this.createResult(false, undefined, 'Pattern parameter must be a string');
-    }
-
-    if (typeof searchPath !== 'string') {
-      return this.createResult(false, undefined, 'Path parameter must be a string');
-    }
-
+export const FileSearchTool = new DynamicStructuredTool({
+  name: 'file-search',
+  description: 'Search for text patterns in files',
+  schema: z.object({
+    pattern: z.string().describe('Text pattern to search for'),
+    path: z.string().describe('File or directory path to search in'),
+    recursive: z
+      .boolean()
+      .default(true)
+      .describe('Search recursively in subdirectories (default: true)'),
+    useRegex: z.boolean().default(false).describe('Use regular expressions (default: false)'),
+    caseSensitive: z.boolean().default(false).describe('Case sensitive search (default: false)'),
+    fileExtensions: z
+      .array(z.string())
+      .optional()
+      .describe('Filter by file extensions (e.g., [".ts", ".js"])'),
+    maxResults: z
+      .number()
+      .default(100)
+      .describe('Maximum number of results to return (default: 100)'),
+  }),
+  func: async ({
+    pattern,
+    path: searchPath,
+    recursive = true,
+    useRegex = false,
+    caseSensitive = false,
+    fileExtensions,
+    maxResults = 100,
+  }) => {
     try {
       const absolutePath = path.resolve(searchPath);
       const results: Array<{
@@ -312,14 +248,14 @@ export class FileSearchTool extends BaseTool {
           const lines = content.split('\n');
 
           lines.forEach((line, index) => {
-            if (results.length >= (maxResults as number)) return;
+            if (results.length >= maxResults) return;
 
             let found = false;
             let match = '';
 
             if (useRegex) {
               const flags = caseSensitive ? 'g' : 'gi';
-              const regex = new RegExp(pattern as string, flags);
+              const regex = new RegExp(pattern, flags);
               const regexMatch = line.match(regex);
               if (regexMatch) {
                 found = true;
@@ -327,10 +263,10 @@ export class FileSearchTool extends BaseTool {
               }
             } else {
               const searchLine = caseSensitive ? line : line.toLowerCase();
-              const searchPattern = caseSensitive ? pattern : (pattern as string).toLowerCase();
+              const searchPattern = caseSensitive ? pattern : pattern.toLowerCase();
               if (searchLine.includes(searchPattern)) {
                 found = true;
-                match = pattern as string;
+                match = pattern;
               }
             }
 
@@ -339,12 +275,15 @@ export class FileSearchTool extends BaseTool {
                 file: filePath,
                 line: index + 1,
                 content: line.trim(),
-                match
+                match,
               });
             }
           });
         } catch (error) {
           // Skip files that can't be read
+          console.error(
+            `Error reading ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
         }
       };
 
@@ -354,7 +293,7 @@ export class FileSearchTool extends BaseTool {
         if (stat.isFile()) {
           if (fileExtensions && Array.isArray(fileExtensions)) {
             const ext = path.extname(currentPath);
-            if (!(fileExtensions as string[]).includes(ext)) {
+            if (!fileExtensions.includes(ext)) {
               return;
             }
           }
@@ -362,7 +301,7 @@ export class FileSearchTool extends BaseTool {
         } else if (stat.isDirectory() && recursive) {
           const entries = await fs.readdir(currentPath);
           for (const entry of entries) {
-            if (results.length >= (maxResults as number)) break;
+            if (results.length >= maxResults) break;
             await processPath(path.join(currentPath, entry));
           }
         }
@@ -370,15 +309,20 @@ export class FileSearchTool extends BaseTool {
 
       await processPath(absolutePath);
 
-      return this.createResult(true, {
-        results,
-        totalMatches: results.length,
-        searchPath: absolutePath,
-        pattern: pattern as string
+      return JSON.stringify({
+        success: true,
+        data: {
+          results,
+          totalMatches: results.length,
+          searchPath: absolutePath,
+          pattern,
+        },
       });
-
     } catch (error) {
-      return this.createResult(false, undefined, `Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return JSON.stringify({
+        success: false,
+        error: `Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
     }
-  }
-}
+  },
+});

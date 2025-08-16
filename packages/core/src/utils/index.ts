@@ -31,11 +31,14 @@ export function truncateString(str: string, maxLength: number, suffix = '...'): 
 
 export function sanitizeFilename(filename: string): string {
   // Remove or replace invalid characters for filenames
-  return filename
-    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
-    .replace(/\s+/g, '_')
-    .replace(/_{2,}/g, '_')
-    .replace(/^_+|_+$/g, '');
+  return (
+    filename
+      // eslint-disable-next-line no-control-regex
+      .replace(/[<>:"/\\|?*\x00-\x1f]/g, '_')
+      .replace(/\s+/g, '_')
+      .replace(/_{2,}/g, '_')
+      .replace(/^_+|_+$/g, '')
+  );
 }
 
 export function parseCommand(input: string): { command: string; args: string[] } {
@@ -78,7 +81,7 @@ export function throttle<T extends (...args: any[]) => void>(
     if (!inThrottle) {
       func(...args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => (inThrottle = false), limit);
     }
   };
 }
@@ -90,7 +93,7 @@ export function deepMerge(target: any, source: any): any {
   const result = { ...target };
 
   for (const key in source) {
-    if (source.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
       if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
         result[key] = deepMerge(target[key], source[key]);
       } else {
@@ -111,7 +114,7 @@ export function capitalizeFirst(str: string): string {
 }
 
 export function camelToKebab(str: string): string {
-  return str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+  return str.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
 }
 
 export function kebabToCamel(str: string): string {
@@ -131,10 +134,10 @@ export function parseEnvValue(value: string): string | number | boolean {
   // Parse environment variable values to appropriate types
   if (value.toLowerCase() === 'true') return true;
   if (value.toLowerCase() === 'false') return false;
-  
+
   const num = Number(value);
   if (!isNaN(num) && isFinite(num)) return num;
-  
+
   return value;
 }
 

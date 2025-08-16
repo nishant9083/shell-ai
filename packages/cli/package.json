@@ -1,12 +1,12 @@
 {
-  "name": "@ai-cli/cli",
-  "version": "0.1.0",
+  "name": "@shell-ai/cli",
+  "version": "1.0.0",
   "type": "module",
-  "description": "Interactive command-line interface for AI-CLI with Ollama backend",
+  "description": "Interactive command-line interface for Shell AI with Ollama backend",
   "main": "./dist/index.js",
   "bin": {
-    "ai-cli": "./dist/index.js",
-    "ai": "./dist/index.js"
+    "shell-ai": "./dist/index.js",
+    "sai": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc --build",
@@ -18,7 +18,7 @@
     "debug": "tsx --inspect-brk src/index.ts"
   },
   "dependencies": {
-    "@ai-cli/core": "^0.1.0",
+    "@shell-ai/core": "^1.0.0",
     "ink": "^4.4.1",
     "ink-spinner": "^5.0.0",
     "react": "^18.2.0",
@@ -44,20 +44,29 @@
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.18.1"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
+    "shell",
     "ai",
-    "cli",
     "ollama",
     "interactive",
-    "terminal"
+    "terminal",
+    "cli"
   ],
-  "author": "AI-CLI Team",
+  "author": "Shell AI Team",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/ai-cli.git",
+    "url": "https://github.com/nishant9083/shell-ai.git",
     "directory": "packages/cli"
   }
 }
