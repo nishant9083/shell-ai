@@ -1,9 +1,9 @@
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage, SystemMessage, ToolMessage } from '@langchain/core/messages';
 import { DynamicStructuredTool as Tool } from '@langchain/core/tools';
 import { MemorySaver } from '@langchain/langgraph';
 
-import { AgentCallbacks } from '../types/index.js';
+import { AgentCallbacks, ChatMessage } from '../types/index.js';
 import { OllamaClient } from '../client/ollama-client.js';
 import { ConfigManager } from '../config/config.js';
 
@@ -65,14 +65,42 @@ export class LangGraphAgent {
           const messages = (values as any)['messages'];
           if (processedMessageIds.has(messages[messages.length - 1].id)) continue;
           processedMessageIds.add(messages[messages.length - 1].id);
-          if (messages[messages.length - 1] instanceof AIMessage) {
+          const res = messages[messages.length - 1];
+          if (res instanceof AIMessage) {
             const res = String(messages[messages.length - 1].content);
             if (res !== '') {
-              callbacks.onResponse(res);
+              const msg: ChatMessage = {
+                role: 'assistant',
+                content: res,
+                timestamp: new Date(),
+                display: true,
+              };
+              callbacks.onResponse(msg);
               this.history.push(...messages);
             }
           } else {
             callbacks.onThinking(`Processing your request...`);
+          }
+          if (res instanceof ToolMessage) {
+            let status = false;
+            try {
+              status = JSON.parse(res.content as string).success;
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (_error) {
+              status = false;
+            }
+            const msg: ChatMessage = {
+              role: 'tool',
+              content: '',
+              toolCall: {
+                tool: res.name || '',
+                status: status,
+                result: res.content,
+              },
+              timestamp: new Date(),
+              display: true,
+            };
+            callbacks.onResponse(msg);
           }
         }
       }
@@ -80,6 +108,7 @@ export class LangGraphAgent {
       if (error instanceof Error && error.message === 'Abort') {
         return;
       }
+      // console.log(error);
       throw error;
     } finally {
       this.isProcessing = false;
@@ -150,6 +179,7 @@ export class LangGraphAgent {
   private requiresConfirmation(toolName: string): boolean {
     // Define which tools require confirmation based on their potential impact
     const destructiveTools = ['shell-exec'];
-    return destructiveTools.includes(toolName);
+    // Tools starting with 'mcp' (model context protocol) also require confirmation
+    return destructiveTools.includes(toolName) || toolName.startsWith('mcp');
   }
 }

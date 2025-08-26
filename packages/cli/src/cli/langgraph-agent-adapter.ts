@@ -59,6 +59,7 @@ export class LangGraphAgentAdapter {
       // Run the LangGraph agent
       await this.langGraphAgent.run(input, callbacks);
     } catch (error) {
+      // console.log(error);
       callbacks.onError(error instanceof Error ? error.message : 'Unknown error');
     }
   }
@@ -66,6 +67,8 @@ export class LangGraphAgentAdapter {
   private getEnabledTools(): Tool[] {
     const config = this.configManager.getConfig();
     const allTools = toolRegistry.list();
-    return allTools.filter(tool => config.enabledTools.includes(tool.name));
+    return allTools.filter(
+      tool => config.enabledTools.includes(tool.name) || tool.name.startsWith('mcp-')
+    );
   }
 }

@@ -8,6 +8,7 @@ import {
   ConfigManager,
   toolRegistry,
   AgentCallbacks,
+  MCPManager,
 } from '@shell-ai/core';
 
 import { AgentChatProps, ChatMessage, AgentAction } from '../types/index.js';
@@ -20,6 +21,7 @@ export class InteractiveChat {
   private client: OllamaClient;
   private memory: MemoryManager;
   private configManager: ConfigManager;
+  private mcpManager: MCPManager;
   private agentProcessor: LangGraphAgentAdapter;
   private autocompleteManager: AutocompleteManager;
   private messages: ChatMessage[] = [];
@@ -29,6 +31,7 @@ export class InteractiveChat {
     this.client = props.client;
     this.memory = props.memory;
     this.configManager = props.configManager;
+    this.mcpManager = props.mcpManager;
     this.systemPrompt = props.systemPrompt;
     this.agentProcessor = new LangGraphAgentAdapter({
       client: this.client,
@@ -144,8 +147,8 @@ export class InteractiveChat {
 
       this.messages.push(errorMessage);
       setMessages([...this.messages]);
-      setAgentActions(null);
     } finally {
+      setAgentActions(null);
       setIsProcessing(false);
     }
   };
@@ -224,6 +227,7 @@ ${content}
     switch (command.toLowerCase()) {
       case 'quit':
       case 'exit':
+        await this.mcpManager.shutdown();
         exit();
         return;
 
@@ -258,6 +262,22 @@ ${content}
 
       case 'info':
         responseMessage.content = await this.getStatusInfo();
+        break;
+
+      case 'mcp':
+        {
+          const connections = this.mcpManager.getConnections();
+          if (connections.length === 0) {
+            responseMessage.content = `📡 No MCP servers configured. Check ~/.shell-ai/mcp.json`;
+          } else {
+            responseMessage.content = `📡 MCP Server Status:\n\n${connections
+              .map(
+                conn =>
+                  `• ${conn.serverName}: ${conn.isConnected ? '✅ Connected' : '❌ Disconnected'} (${conn.tools.length} tools)`
+              )
+              .join('\n')}`;
+          }
+        }
         break;
 
       default:
@@ -316,7 +336,7 @@ You can also reference specific files using @filename or @path/to/file.`;
 
 ENABLED TOOLS:
 ${tools
-  .filter(tool => config.enabledTools.includes(tool.name))
+  .filter(tool => config.enabledTools.includes(tool.name) || tool.name.startsWith('mcp-'))
   .map(tool => `  • ${tool.name}: ${tool.description}`)
   .join('\n')}
   `;
@@ -345,18 +365,11 @@ ${tools
           setPendingConfirmation({ content, callback: resolve });
         });
       },
-      onResponse: (response: string) => {
-        const assistantMessage: ChatMessage = {
-          role: 'assistant',
-          content: response,
-          timestamp: new Date(),
-          display: true,
-        };
-
-        this.messages.push(assistantMessage);
+      onResponse: message => {
+        this.messages.push(message);
         setMessages([...this.messages]);
-        setAgentActions(null);
-        setIsProcessing(false);
+        // setAgentActions(null);
+        // setIsProcessing(false);
       },
       onError: (error: string) => {
         const errorMessage: ChatMessage = {

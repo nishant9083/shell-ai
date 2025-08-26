@@ -48,6 +48,12 @@ export class AutocompleteManager {
       type: 'command',
       icon: figures.info,
     },
+    {
+      value: 'mcp',
+      description: 'List Model Context Protocol (MCP) tools',
+      type: 'command',
+      icon: '🔨',
+    },
     // {
     //   value: 'history',
     //   description: 'Show conversation history',

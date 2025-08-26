@@ -7,3 +7,4 @@ export * from './utils/index.js';
 export * from './types/index.js';
 export * from './agent/langgraph-agent.js';
 export { ToolRegistry } from './tools/tool-registry.js';
+export * from './mcp/manager.js';

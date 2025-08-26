@@ -273,33 +273,37 @@ export const ChatApp: React.FC<ChatAppProps> = props => {
       }
     };
 
+    // Helper function to truncate long strings
+    const truncateString = (str: string, maxLength: number): string => {
+      if (str.length <= maxLength) return str;
+      return str.substring(0, maxLength) + '...';
+    };
     return (
       <Box flexDirection="column">
         <Box>
           <Text color={getColor()} bold>
             {getIcon()}{' '}
             {msg.role === 'user'
-              ? 'You'
+              ? 'You:'
               : msg.role === 'assistant'
-                ? 'Agent'
+                ? 'Agent:'
                 : msg.role === 'tool'
-                  ? 'Tool'
-                  : 'System'}
-            :
+                  ? `Tool: ${msg.toolCall ? msg.toolCall.tool : ''}`
+                  : 'System:'}
           </Text>
         </Box>
-        <Box paddingLeft={2}>
-          <DynamicMarkdown>{msg.content}</DynamicMarkdown>
-        </Box>
+        {msg.content !== '' && (
+          <Box paddingLeft={2}>
+            <DynamicMarkdown>{msg.content}</DynamicMarkdown>
+          </Box>
+        )}
+
         {msg.toolCall && (
-          <Box paddingLeft={2} marginTop={1}>
-            <Text color="cyan" dimColor>
-              {figures.arrowRight} Used tool: {msg.toolCall.tool}
-            </Text>
-            {msg.toolCall.result && (
-              <Text color={msg.toolCall.result.success ? 'green' : 'red'} dimColor>
-                {figures.arrowRight} Result: {msg.toolCall.result.success ? 'Success' : 'Failed'}
-              </Text>
+          <Box paddingLeft={2} marginTop={1} borderStyle="round" borderColor="gray">
+            {msg.toolCall.status ? (
+              <DynamicMarkdown>{truncateString(msg.toolCall.result, 500)}</DynamicMarkdown>
+            ) : (
+              <Text color="red">{truncateString(String(msg.toolCall.result), 500)}</Text>
             )}
           </Box>
         )}

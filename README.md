@@ -54,12 +54,12 @@ shell-ai --model mistral
 ```
 
 ### Options
-| Option | Description |
-|--------|-------------|
-| `-m, --model <model>` | Specify the Ollama model. |
-| `-t, --temperature <temp>` | Set the model's temperature. |
-| `-s, --system <prompt>` | Provide a custom system prompt. |
-| `-h, --help` | Show help. |
+| Option                     | Description                     |
+| -------------------------- | ------------------------------- |
+| `-m, --model <model>`      | Specify the Ollama model.       |
+| `-t, --temperature <temp>` | Set the model's temperature.    |
+| `-s, --system <prompt>`    | Provide a custom system prompt. |
+| `-h, --help`               | Show help.                      |
 
 ## Interaction Modes
 
@@ -78,32 +78,32 @@ $ shell-ai
 ### Slash Commands
 Inside the interactive chat, you can use slash commands for specific actions:
 
-| Command | Description |
-|---|---|
-| `/help` | Show available commands and tools. |
+| Command  | Description                             |
+| -------- | --------------------------------------- |
+| `/help`  | Show available commands and tools.      |
 | `/model` | Switch between available Ollama models. |
-| `/info` | Display statistics about the agent. |
+| `/info`  | Display statistics about the agent.     |
 | `/clear` | Clear the current conversation history. |
-| `/exit` | End the current session. |
+| `/exit`  | End the current session.                |
 
 
 ## Available Tools
 The agent has access to the following tools to perform tasks:
 
-| Tool | Description |
-|---|---|
-| `file-read` | Read the contents of a file. |
-| `file-write` | Write content to a file. |
-| `file-edit` | Edit specific lines or perform find-and-replace. |
-| `file-search` | Search for text patterns in files. |
-| `shell-exec` | Execute shell commands. **Requires user confirmation.** |
-| `directory-list` | List files and directories in a path. |
-| `current-directory` | Get the current working directory and its contents. |
-| `web-search` | Perform a web search. |
-| `wikipedia-search` | Search for articles on Wikipedia. |
-| `memory-add` | Add a fact to the agent's long-term memory. |
-| `memory-retrieve` | Retrieve facts from the agent's memory. |
-| `search-file-content` | A powerful grep-like tool to find content in files. |
+| Tool                  | Description                                             |
+| --------------------- | ------------------------------------------------------- |
+| `file-read`           | Read the contents of a file.                            |
+| `file-write`          | Write content to a file.                                |
+| `file-edit`           | Edit specific lines or perform find-and-replace.        |
+| `file-search`         | Search for text patterns in files.                      |
+| `shell-exec`          | Execute shell commands. **Requires user confirmation.** |
+| `directory-list`      | List files and directories in a path.                   |
+| `current-directory`   | Get the current working directory and its contents.     |
+| `web-search`          | Perform a web search.                                   |
+| `wikipedia-search`    | Search for articles on Wikipedia.                       |
+| `memory-add`          | Add a fact to the agent's long-term memory.             |
+| `memory-retrieve`     | Retrieve facts from the agent's memory.                 |
+| `search-file-content` | A powerful grep-like tool to find content in files.     |
 
 ## Configuration
 You can set defaults via a `.shell-ai-config` file in your home directory.

@@ -1,9 +1,10 @@
-import { OllamaClient, MemoryManager, ConfigManager } from '@shell-ai/core';
+import { OllamaClient, MemoryManager, ConfigManager, MCPManager } from '@shell-ai/core';
 
 export interface AgentChatProps {
   client: OllamaClient;
   memory: MemoryManager;
   configManager: ConfigManager;
+  mcpManager: MCPManager;
   model?: string;
   systemPrompt?: string;
   temperature?: number;
@@ -16,7 +17,8 @@ export interface ChatMessage {
   timestamp: Date;
   toolCall?: {
     tool: string;
-    parameters: Record<string, unknown>;
+    status: boolean;
+    parameters?: Record<string, unknown>;
     result?: any;
   };
   // agentActions?: AgentAction[];

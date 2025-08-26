@@ -1,0 +1,90 @@
+{
+  "servers": [
+    {
+      "name": "github-server",
+      "enabled": true,
+      "http": {
+        "url": "https://api.github.com/mcp",
+        "auth": {
+          "type": "bearer",
+          "token": "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      },
+      "description": "GitHub MCP server with Bearer token"
+    },
+    {
+      "name": "database-server",
+      "enabled": true,
+      "http": {
+        "url": "https://db.example.com/mcp",
+        "auth": {
+          "type": "basic",
+          "username": "admin",
+          "password": "secret123"
+        }
+      },
+      "description": "Database server with Basic auth"
+    },
+    {
+      "name": "api-server",
+      "enabled": true,
+      "sse": {
+        "url": "https://api.example.com/mcp/sse",
+        "auth": {
+          "type": "api_key",
+          "apiKey": "ak_xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "apiKeyHeader": "X-API-Key"
+        }
+      },
+      "description": "API server with API key authentication"
+    },
+    {
+      "name": "oauth-server",
+      "enabled": true,
+      "http": {
+        "url": "https://oauth.example.com/mcp",
+        "auth": {
+          "type": "oauth2",
+          "clientId": "my-client-id",
+          "clientSecret": "my-client-secret",
+          "tokenUrl": "https://oauth.example.com/token",
+          "scope": "mcp.read mcp.write"
+        }
+      },
+      "description": "OAuth2 server with client credentials flow"
+    },
+    {
+      "name": "custom-auth-server",
+      "enabled": true,
+      "http": {
+        "url": "https://custom.example.com/mcp",
+        "auth": {
+          "type": "custom",
+          "customHeaders": {
+            "X-Custom-Auth": "custom-token-123",
+            "X-Client-ID": "my-client",
+            "X-Timestamp": "auto"
+          }
+        }
+      },
+      "description": "Server with custom authentication headers"
+    },
+    {
+      "name": "local-server",
+      "enabled": true,
+      "command": {
+        "program": "node",
+        "args": ["server.js"],
+        "env": {
+          "API_KEY": "local-api-key-123",
+          "NODE_ENV": "development"
+        }
+      },
+      "description": "Local stdio server (auth via environment variables)"
+    }
+  ],
+  "globalTimeout": 30000,
+  "maxConcurrentConnections": 10,
+  "enableAutoReconnect": true,
+  "logLevel": "info"
+}

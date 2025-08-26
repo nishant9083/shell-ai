@@ -7,7 +7,9 @@ export class ToolRegistry {
   register(tool: Tool): void {
     this.tools.set(tool.name, tool);
   }
-
+  registerMultiple(tools: Tool[]): void {
+    tools.forEach(tool => this.register(tool));
+  }
   unregister(toolName: string): void {
     this.tools.delete(toolName);
   }
@@ -22,25 +24,6 @@ export class ToolRegistry {
 
   has(toolName: string): boolean {
     return this.tools.has(toolName);
-  }
-
-  async execute(toolName: string, params: Record<string, unknown>) {
-    const tool = this.tools.get(toolName);
-    if (!tool) {
-      return {
-        success: false,
-        error: `Tool '${toolName}' not found`,
-      };
-    }
-
-    try {
-      return await tool.invoke(params);
-    } catch (error) {
-      return {
-        success: false,
-        error: `Tool execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      };
-    }
   }
 
   clear(): void {

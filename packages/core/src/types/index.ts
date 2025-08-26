@@ -5,7 +5,8 @@ export interface ChatMessage {
   timestamp: Date;
   toolCall?: {
     tool: string;
-    parameters: Record<string, unknown>;
+    status: boolean;
+    parameters?: Record<string, unknown>;
     result?: any;
   };
   display: boolean;
@@ -119,6 +120,74 @@ export interface AgentCallbacks {
   onThinking: (thought: string) => void;
   onToolCall: (tool: string, params: Record<string, unknown>) => void;
   onConfirmation: (content: string) => Promise<boolean>;
-  onResponse: (response: string) => void;
+  onResponse: (message: ChatMessage) => void;
   onError: (error: string) => void;
+}
+
+export interface MCPAuthConfig {
+  type: 'bearer' | 'basic' | 'api_key' | 'oauth2' | 'custom';
+  // For Bearer token authentication
+  token?: string;
+  // For Basic authentication
+  username?: string;
+  password?: string;
+  // For API Key authentication
+  apiKey?: string;
+  apiKeyHeader?: string; // Default: 'X-API-Key'
+  // For OAuth2 (simplified)
+  clientId?: string;
+  clientSecret?: string;
+  tokenUrl?: string;
+  scope?: string;
+  // For custom headers
+  customHeaders?: Record<string, string>;
+}
+
+export interface MCPServerConfig {
+  name: string;
+  command?: {
+    program: string;
+    args?: string[];
+    env?: Record<string, string>;
+    cwd?: string;
+  };
+  http?: {
+    url: string;
+    headers?: Record<string, string>;
+    auth?: MCPAuthConfig;
+  };
+  sse?: {
+    url: string;
+    headers?: Record<string, string>;
+    auth?: MCPAuthConfig;
+  };
+  includeTools?: string[];
+  excludeTools?: string[];
+  enabled: boolean;
+  timeout?: number;
+  retryAttempts?: number;
+  description?: string;
+}
+
+export interface MCPConfig {
+  servers: MCPServerConfig[];
+  globalTimeout: number;
+  maxConcurrentConnections: number;
+  enableAutoReconnect: boolean;
+  logLevel: 'debug' | 'info' | 'warn' | 'error';
+}
+
+export interface MCPTool {
+  name: string;
+  description: string;
+  inputSchema: any;
+  serverName: string;
+}
+
+export interface MCPConnection {
+  serverName: string;
+  client: any;
+  tools: MCPTool[];
+  isConnected: boolean;
+  lastError?: string;
 }

@@ -16,6 +16,7 @@ export class OllamaClient {
     this.llm = new ChatOllama({
       model: config.currentModel,
       baseUrl: config.ollamaUrl,
+      numCtx: config.maxTokens,
     });
   }
 
@@ -76,7 +77,7 @@ export class OllamaClient {
               {
                 function: {
                   name: msg.toolCall.tool,
-                  arguments: msg.toolCall.parameters,
+                  arguments: msg.toolCall.parameters || {},
                 },
               },
             ]

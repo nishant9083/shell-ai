@@ -1,7 +1,14 @@
 import { Command } from 'commander';
-import { ConfigManager, OllamaClient, MemoryManager } from '@shell-ai/core';
+import {
+  ConfigManager,
+  OllamaClient,
+  MemoryManager,
+  MCPManager,
+  toolRegistry,
+} from '@shell-ai/core';
 
 import { InteractiveChat } from './agent-chat.js';
+
 const packageJson = await import('../../package.json', {
   with: { type: 'json' },
 });
@@ -51,11 +58,16 @@ export async function main(): Promise<void> {
         config.memory.persistToFile,
         config.memory.filePath
       );
+      const mcpManager = new MCPManager();
+      await mcpManager.initialize();
+      const mcpTools = mcpManager.getTools();
+      toolRegistry.registerMultiple(mcpTools);
 
       const chat = new InteractiveChat({
         client,
         memory,
         configManager,
+        mcpManager,
         model: options.model,
         systemPrompt: options.system || config.systemPrompt,
         temperature: options.temperature,
