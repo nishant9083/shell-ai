@@ -2,6 +2,12 @@
 
 Core functionality for Shell AI - providing the foundation for local AI model integration, tools, and utilities.
 
+[![NPM Version](https://img.shields.io/npm/v/@shell-ai/core.svg)](https://www.npmjs.com/package/@shell-ai/core)
+[![GitHub Stars](https://img.shields.io/github/stars/nishant9083/shell-ai.svg)](https://github.com/nishant9083/shell-ai)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Issues](https://img.shields.io/github/issues/nishant9083/shell-ai.svg)](https://github.com/nishant9083/shell-ai/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/nishant9083/shell-ai/blob/main/CONTRIBUTING.md)
+
 ## Overview
 
 This package contains the core functionality of Shell AI, including:
@@ -12,6 +18,8 @@ This package contains the core functionality of Shell AI, including:
 - **Configuration Management**: User preferences and settings
 - **Plugin System**: Extensible architecture for custom tools
 - **Agent System**: LangGraph-based agent orchestration
+- **Model Context Protocol (MCP) Integration**: Support for connecting to MCP servers and utilizing external tools
+- **Logging and Debugging**: Comprehensive logging system for monitoring and debugging agent operations
 
 ## Installation
 

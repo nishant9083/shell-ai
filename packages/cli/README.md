@@ -2,6 +2,13 @@
 
 Interactive command-line interface for Shell AI with Ollama backend.
 
+[![NPM Version](https://img.shields.io/npm/v/@shell-ai/cli.svg)](https://www.npmjs.com/package/@shell-ai/cli)
+[![GitHub Stars](https://img.shields.io/github/stars/nishant9083/shell-ai.svg)](https://github.com/nishant9083/shell-ai)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Issues](https://img.shields.io/github/issues/nishant9083/shell-ai.svg)](https://github.com/nishant9083/shell-ai/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/nishant9083/shell-ai/blob/main/CONTRIBUTING.md)
+
+
 ## Overview
 
 This package provides the command-line interface for Shell AI, enabling users to interact with local AI models through a powerful terminal interface with comprehensive model, and memory management.
@@ -95,6 +102,51 @@ Shell AI automatically creates and manages a configuration file with settings fo
   }
 }
 ```
+
+## Model Context Protocol (MCP) Integration
+
+Shell AI supports the Model Context Protocol (MCP), allowing you to extend functionality by connecting to external MCP servers. This enables integration with databases, APIs, custom tools, and third-party services.
+
+### MCP Configuration
+
+Create a configuration file at `~/.shell-ai/mcp.json` to define your MCP servers:
+
+```json
+{
+  "servers": [
+    {
+      "name": "github-server",
+      "enabled": true,
+      "http": {
+        "url": "https://api.github.com/mcp",
+        "auth": {
+          "type": "bearer",
+          "token": "your_github_token"
+        }
+      },
+      "description": "GitHub MCP server integration"
+    }
+  ],
+  "globalTimeout": 30000,
+  "maxConcurrentConnections": 10,
+  "enableAutoReconnect": true
+}
+```
+
+### Supported Transport Types
+
+- **HTTP**: Standard HTTP connections with authentication support
+- **SSE**: Server-Sent Events for real-time communication
+- **STDIO**: Local process communication for development
+
+### Authentication Methods
+
+- **Bearer Token**: For OAuth2 and API tokens
+- **Basic Auth**: Username/password authentication
+- **API Key**: Custom API key headers
+- **OAuth2**: Full OAuth2 flow support
+
+*For example checkout the [MCP Example Integration](https://github.com/nishant9083/shell-ai/blob/main/mcp_example.json) for a complete implementation.*
 
 ## Memory System
 

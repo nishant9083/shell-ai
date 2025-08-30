@@ -1,6 +1,6 @@
 {
   "name": "shell-ai",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "Intelligent shell assistant powered by local AI models through Ollama",
   "private": false,

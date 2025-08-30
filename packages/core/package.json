@@ -1,6 +1,6 @@
 {
   "name": "@shell-ai/core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "Core functionality for Shell AI - Ollama integration, tools, and utilities",
   "main": "./dist/index.js",
