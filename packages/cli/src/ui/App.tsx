@@ -1,5 +1,5 @@
 import figures from 'figures';
-import { useApp, useInput, Box, Static, Spacer, Text } from 'ink';
+import { useApp, useInput, Box, Static, Text } from 'ink';
 import Spinner from 'ink-spinner';
 import { useState, useRef, useCallback, JSX } from 'react';
 import { ConfigManager } from '@shell-ai/core';

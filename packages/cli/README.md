@@ -13,7 +13,7 @@ Interactive command-line interface for Shell AI with Ollama backend.
 
 This package provides the command-line interface for Shell AI, enabling users to interact with local AI models through a powerful terminal interface with comprehensive model, and memory management.
 
-<img width="1690" height="963" alt="image" src="https://github.com/user-attachments/assets/e92e9d3f-065d-4411-946d-4bf4214dd352" />
+<img alt="image" src="https://github.com/user-attachments/assets/e92e9d3f-065d-4411-946d-4bf4214dd352" />
 
 
 ## Features

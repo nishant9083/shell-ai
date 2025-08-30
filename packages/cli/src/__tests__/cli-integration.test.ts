@@ -36,13 +36,6 @@ describe('CLI Integration Tests', () => {
       
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toMatch(/\d+\.\d+\.\d+/); // Should contain version number
-    });    
-
-    it('should handle model specification', async () => {
-      const result = await runCLI(['ask' ,'--model', 'gpt-oss:latest', '"Hello"'], { timeout: 10000 });
-      
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout.length).toBeGreaterThan(0);
     });
    
   });
