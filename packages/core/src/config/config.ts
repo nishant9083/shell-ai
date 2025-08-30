@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import { AppConfig } from '../types/index.js';
 import { OllamaClient } from '../client/ollama-client.js';
 import { getCoreSystemPrompt } from '../prompts/prompts.js';
+import { logger } from '../utils/logger.js';
 
 const DEFAULT_CONFIG: AppConfig = {
   ollamaUrl: 'http://localhost:11434',
@@ -86,7 +87,7 @@ export class ConfigManager {
         });
         return true;
       } else {
-        console.warn(
+        logger.warn(
           chalk.yellow(
             '⚠️ No models available. Please pull a model using `ollama pull <model-name>`'
           )
@@ -117,7 +118,7 @@ export class ConfigManager {
         return { ...DEFAULT_CONFIG, ...configData };
       }
     } catch (error) {
-      console.warn(`Failed to load config from ${this.configPath}:`, error);
+      logger.warn(`Failed to load config from ${this.configPath}:`, 'config', error);
     }
 
     // Return default config and save it

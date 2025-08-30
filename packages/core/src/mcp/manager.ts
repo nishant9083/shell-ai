@@ -19,6 +19,7 @@ import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 import axios from 'axios';
 
+import { logger } from '../utils/logger.js';
 import {
   MCPConfig,
   MCPServerConfig,
@@ -58,7 +59,7 @@ export class MCPManager {
         return { ...DEFAULT_MCP_CONFIG, ...configData };
       }
     } catch (error) {
-      console.warn(`Failed to load MCP config from ${this.configPath}:`, error);
+      logger.warn(`Failed to load MCP config from ${this.configPath}:`, 'manager.ts', error);
     }
 
     // Return default config and save it
@@ -71,23 +72,27 @@ export class MCPManager {
       fs.ensureDirSync(path.dirname(this.configPath));
       fs.writeJsonSync(this.configPath, config, { spaces: 2 });
     } catch (error) {
-      console.error(`Failed to save MCP config to ${this.configPath}:`, error);
+      logger.error(`Failed to save MCP config to ${this.configPath}:`, 'manager.ts', error);
     }
   }
 
   async initialize(): Promise<boolean> {
     try {
-      console.log('🔗 Initializing MCP connections...');
+      logger.info('🔗 Initializing MCP connections...');
 
       const enabledServers = this.config.servers.filter(server => server.enabled);
       if (enabledServers.length === 0) {
-        console.log('📭 No MCP servers configured');
+        logger.info('📭 No MCP servers configured');
         return true;
       }
 
       const connectionPromises = enabledServers.map(server =>
         this.connectToServer(server).catch(error => {
-          console.error(`❌ Failed to connect to MCP server ${server.name}:`, error.message);
+          logger.error(
+            `❌ Failed to connect to MCP server ${server.name}:`,
+            'manager.ts',
+            error.message
+          );
           return false;
         })
       );
@@ -95,15 +100,15 @@ export class MCPManager {
       const results = await Promise.all(connectionPromises);
       const successfulConnections = results.filter(Boolean).length;
 
-      console.log(`🔗 Connected to ${successfulConnections}/${enabledServers.length} MCP servers`);
+      logger.info(`🔗 Connected to ${successfulConnections}/${enabledServers.length} MCP servers`);
 
       if (successfulConnections > 0) {
-        console.log(`🛠️ Registered ${this.tools.size} MCP tools`);
+        logger.info(`Registered ${this.tools.size} MCP tools`);
       }
 
       return true;
     } catch (error) {
-      console.log(error);
+      logger.error(error instanceof Error ? error.message : 'Unknown error', 'manager.ts', error);
       return false;
     }
   }
@@ -160,10 +165,10 @@ export class MCPManager {
         isConnected: true,
       });
 
-      console.log(`✅ Connected to MCP server: ${serverConfig.name} (${mcpTools.length} tools)`);
+      logger.info(`✅ Connected to MCP server: ${serverConfig.name} (${mcpTools.length} tools)`);
       return true;
     } catch (error) {
-      console.error(`❌ Failed to connect to MCP server ${serverConfig.name}:`, error);
+      logger.error(`❌ Failed to connect to MCP server ${serverConfig.name}:`, 'manager.ts', error);
       return false;
     }
   }
@@ -274,7 +279,7 @@ export class MCPManager {
         break;
 
       default:
-        console.warn(`Unsupported authentication type: ${authConfig.type}`);
+        logger.warn(`Unsupported authentication type: ${authConfig.type}`);
     }
 
     return headers;
@@ -282,7 +287,7 @@ export class MCPManager {
 
   private async getOAuth2Token(authConfig: MCPAuthConfig): Promise<string | null> {
     if (!authConfig.clientId || !authConfig.clientSecret || !authConfig.tokenUrl) {
-      console.error('OAuth2 configuration incomplete');
+      logger.error('OAuth2 configuration incomplete');
       return null;
     }
 
@@ -302,7 +307,7 @@ export class MCPManager {
 
       return response.data.access_token;
     } catch (error) {
-      console.error('Failed to obtain OAuth2 token:', error);
+      logger.error('Failed to obtain OAuth2 token:', 'manager.ts', error);
       return null;
     }
   }
@@ -481,25 +486,25 @@ export class MCPManager {
         }
 
         this.connections.delete(serverName);
-        console.log(`🔌 Disconnected from MCP server: ${serverName}`);
+        logger.info(`🔌 Disconnected from MCP server: ${serverName}`);
       } catch (error) {
-        console.error(`Error disconnecting from ${serverName}:`, error);
+        logger.error(`Error disconnecting from ${serverName}:`, 'manager.ts', error);
       }
     }
   }
 
   async shutdown(): Promise<void> {
     try {
-      console.log('🔌 Shutting down MCP connections...');
+      logger.info('🔌 Shutting down MCP connections...');
 
       const disconnectPromises = Array.from(this.connections.keys()).map(serverName =>
         this.disconnectServer(serverName)
       );
 
       await Promise.all(disconnectPromises);
-      console.log('✅ All MCP connections closed');
+      logger.info('✅ All MCP connections closed');
     } catch (error) {
-      console.log(error);
+      logger.error('Error shutting down MCP connections:', 'manager.ts', error);
     }
   }
 
@@ -510,7 +515,7 @@ export class MCPManager {
   async reconnectServer(serverName: string): Promise<boolean> {
     const serverConfig = this.config.servers.find(s => s.name === serverName);
     if (!serverConfig) {
-      console.error(`Server configuration not found: ${serverName}`);
+      logger.error(`Server configuration not found: ${serverName}`);
       return false;
     }
 

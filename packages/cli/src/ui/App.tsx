@@ -1,15 +1,17 @@
 import figures from 'figures';
 import { useApp, useInput, Box, Static, Spacer, Text } from 'ink';
 import Spinner from 'ink-spinner';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, JSX } from 'react';
 import { ConfigManager } from '@shell-ai/core';
 
 import Autocomplete, { AutocompleteOption } from '../cli/autocomplete.js';
 import { LangGraphAgentAdapter } from '../cli/langgraph-agent-adapter.js';
 import { ChatMessage, AgentAction } from '../types/index.js';
+import { useTerminalSize } from '../hooks/useTerminalSize.js';
 
 import { shortAsciiLogo } from './logo.js';
 import DynamicMarkdown from './markdown.js';
+import { LogViewer } from './LogViewer.js';
 
 type ChatAppProps = {
   configManager: ConfigManager;
@@ -38,7 +40,7 @@ type ChatAppProps = {
   ) => Promise<void>;
   applyAutocomplete: (
     option: AutocompleteOption,
-    inputRef: React.MutableRefObject<string>,
+    inputRef: React.RefObject<string>,
     setCurrentInput: React.Dispatch<React.SetStateAction<string>>
   ) => void;
 };
@@ -57,14 +59,27 @@ export const ChatApp: React.FC<ChatAppProps> = props => {
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteIndex, setAutocompleteIndex] = useState(0);
   const [autocompleteOptions, setAutocompleteOptions] = useState<AutocompleteOption[]>([]);
+  const [showLogViewer, setShowLogViewer] = useState(false);
   const inputRef = useRef<string>('');
   const { exit } = useApp();
+  const { rows, columns } = useTerminalSize();
 
   const updateStaticKey = useCallback(() => {
     setStaticKey(prev => prev + 1);
   }, [setStaticKey]);
 
   useInput(async (input, key) => {
+    // Handle log viewer toggle (Ctrl+L)
+    if (key.ctrl && input === 'l') {
+      setShowLogViewer(prev => !prev);
+      return;
+    }
+
+    // If log viewer is open, don't process other inputs except escape
+    if (showLogViewer) {
+      return;
+    }
+
     // Handle ESC key for cancellation
     if (key.escape) {
       if (isProcessing) {
@@ -313,8 +328,13 @@ export const ChatApp: React.FC<ChatAppProps> = props => {
 
   const config = props.configManager.getConfig();
 
+  // If log viewer is shown, render it instead of the main chat
+  // if (showLogViewer) {
+  //   return <LogViewer onClose={() => setShowLogViewer(false)} />;
+  // }
+
   return (
-    <Box flexDirection="column" padding={1}>
+    <Box flexDirection="column" padding={1} width={columns} height={rows - 1}>
       <Box flexDirection="column" marginBottom={1}>
         <Static
           key={staticKey}
@@ -334,6 +354,8 @@ export const ChatApp: React.FC<ChatAppProps> = props => {
           {item => item}
         </Static>
       </Box>
+
+      {showLogViewer && <LogViewer onClose={() => setShowLogViewer(false)} />}
 
       {/* Processing Indicator */}
       {agentActions && (
@@ -374,10 +396,6 @@ export const ChatApp: React.FC<ChatAppProps> = props => {
                   <Text color="gray" bold>
                     Type "/" for commands or "@" for file references
                   </Text>
-                  <Spacer />
-                  <Text color="gray" dimColor>
-                    Type /help for commands
-                  </Text>
                 </>
               )}
             </Box>
@@ -392,8 +410,11 @@ export const ChatApp: React.FC<ChatAppProps> = props => {
       {/* Footer */}
       <Box marginTop={1} justifyContent="space-between" padding={1}>
         <Text color="gray">{config.workingDirectory}</Text>
-        <Box paddingLeft={2}>
-          <Text color="cyan">{config.currentModel}</Text>
+        <Box>
+          <Text color="gray" dimColor>
+            Ctrl+L: Logs
+          </Text>
+          <Text color="cyan"> | {config.currentModel}</Text>
         </Box>
       </Box>
     </Box>

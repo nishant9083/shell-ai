@@ -171,3 +171,6 @@ export function isGitRepository(directory: string): boolean {
   const gitDir = join(directory, '.git');
   return existsSync(gitDir);
 }
+
+// Export logger
+export * from './logger.js';
