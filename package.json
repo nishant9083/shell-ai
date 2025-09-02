@@ -1,6 +1,6 @@
 {
   "name": "shell-ai",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "description": "Intelligent shell assistant powered by local AI models through Ollama",
   "private": false,
@@ -87,14 +87,9 @@
     ]
   },
   "dependencies": {
-    "@eslint/js": "^9.33.0",
-    "@langchain/core": "^0.3.68",
-    "@langchain/langgraph": "^0.4.3",
-    "@langchain/ollama": "^0.2.3",
+    "@eslint/js": "^9.33.0",    
     "@types/uuid": "^10.0.0",
-    "ink-testing-library": "^4.0.0",
-    "marked": "^15.0.12",
-    "marked-terminal": "^7.3.0",
+    "ink-testing-library": "^4.0.0",    
     "typescript-eslint": "^8.39.1",
     "uuid": "^11.1.0"
   }

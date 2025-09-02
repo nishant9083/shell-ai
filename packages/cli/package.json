@@ -1,6 +1,6 @@
 {
   "name": "@shell-ai/cli",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "description": "Interactive command-line interface for Shell AI with Ollama backend",
   "main": "./dist/index.js",
@@ -18,7 +18,7 @@
     "debug": "tsx --inspect-brk index.ts"
   },
   "dependencies": {
-    "@shell-ai/core": "^1.1.0",
+    "@shell-ai/core": "^1.1.1",
     "ansi-escapes": "^7.0.0",
     "boxen": "^8.0.1",
     "chalk": "^5.6.0",
@@ -31,7 +31,9 @@
     "react": "^19.1.1",
     "string-width": "^8.0.0",
     "terminal-size": "^4.0.0",
-    "wrap-ansi": "^9.0.0"
+    "wrap-ansi": "^9.0.0",
+    "marked": "^15.0.12",
+    "marked-terminal": "^7.3.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

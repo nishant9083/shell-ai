@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-09-01
+
+### Fixed
+- **ES Module Resolution**: Fixed module resolution issues when installing packages globally
+  - Resolved `ERR_MODULE_NOT_FOUND` errors for `@langchain/ollama` and other dependencies
+  - Improved dependency declaration in CLI package to ensure proper hoisting
+  - Enhanced TypeScript module resolution configuration
+  - Fixed package exports for better ES module compatibility
+
+### Technical
+- Updated CLI package to include all transitive dependencies explicitly
+- Improved TypeScript configuration for ES module bundling
+- Enhanced package.json exports for better module resolution
+- Fixed global installation compatibility issues
+
+
 ## [1.1.0] - 2025-08-30
 
 ### Added
